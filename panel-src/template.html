@@ -87,6 +87,8 @@
   .tag{font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:600;border-radius:20px;padding:.12rem .5rem;border:1px solid var(--line);background:#FBF7F1;color:var(--ink-soft)}
   .tag.corto{background:var(--gold-tint);color:var(--gold);border-color:#E7D9AC}
   .tag.largo{background:var(--green-tint);color:var(--green);border-color:#CBDECF}
+  .buckchk{display:inline-flex;align-items:center;gap:.3rem;margin:0 .7rem .3rem 0;font-size:.78rem;cursor:pointer;user-select:none}
+  .buckchk input{width:auto;margin:0}
   footer{max-width:1080px;margin:2.5rem auto 0;padding:1rem 1rem 2.5rem;border-top:1px solid var(--line);font-size:.74rem;color:var(--ink-soft)}
   @media (max-width:640px){ .hwrap h1{font-size:1rem} .tab{padding:.4rem .6rem} }
 </style>
@@ -110,6 +112,13 @@
     <div class="hwrap">
       <h1>Panel Bolsa <span class="accent-b">·</span> Sanidad GVA</h1>
       <span class="stamp" id="stamp"></span>
+      <select id="fContr" style="width:auto" title="Qué contratos se muestran en detalle">
+        <option value="">Todos los contratos</option>
+        <option value="C">Cortos (5 días o menos)</option>
+        <option value="L">No cortos (más de 5 días)</option>
+        <option value="X">Indeterminados</option>
+        <option value="V">Vacantes (interinidad)</option>
+      </select>
       <select id="fMes" style="width:auto"></select>
       <nav class="tabs">
         <button class="tab on" id="tabResumen">Resumen</button>
@@ -152,18 +161,20 @@
         <div class="sub" id="gSub"></div>
         <div class="grid2">
           <div class="box">
-            <h3>Personas de esta bolsa con contrato, por mes</h3>
+            <h3 id="lBars">Personas de esta bolsa con contrato, por mes</h3>
             <div class="bars" id="gBars"></div>
             <p class="mini" style="margin-top:.6rem" id="gLlamInfo"></p>
           </div>
           <div class="box">
             <h3>¿Cuánto queda?</h3>
+            <div id="kBuckets"></div>
+            <div class="mini" style="margin-bottom:.6rem">Marca qué situaciones de bolsa cuentan como "por delante".</div>
             <div class="field"><label>Tu puesto en esta bolsa</label>
               <input type="text" id="fPuesto" inputmode="numeric" placeholder="nº de puesto" style="max-width:170px">
             </div>
             <div id="estOut" class="mini">Escribe tu nº de puesto.</div>
             <div id="gLlamChips" style="margin-top:.7rem"></div>
-            <details style="margin-top:.6rem" id="dLlam">
+            <details style="margin-top:.6rem">
               <summary>Ver puestos llamados del mes seleccionado</summary>
               <div style="margin-top:.5rem" id="gLlamList"></div>
             </details>
@@ -238,7 +249,6 @@ function dTxt(d){ if (d == null) return 'sin fin'; const p = toISO(d).split('-')
 /* ---------- índices ---------- */
 const GRUPOS = DATA.grupos, NAMES = DATA.names;
 const nameIdx = (() => { let m = null; return () => (m || (m = new Map(NAMES.map((n, i) => [n, i])))); })();
-const groupIndex = (() => { let m = null; return () => (m || (m = new Map(GRUPOS.map((g, i) => [g.id, i])))); })();
 function filasPorNi(gi){
   const g = GRUPOS[gi];
   if (!g._byName){
@@ -250,15 +260,25 @@ function filasPorNi(gi){
   }
   return g._byName;
 }
-const CCATN = DATA.ccats.map(c => nnorm(c).toLowerCase().replace(/[^a-z0-9]/g, ''));
-function grupoDeId(catn, pi, dpto){
-  const m = groupIndex();
-  if (pi){ const i = m.get(catn + '|1|' + dpto); if (i != null) return i; }
-  return m.get(catn + '|0|' + dpto);
+function posMap(gi){
+  const g = GRUPOS[gi];
+  if (!g._byPos){ g._byPos = new Map(g.filas.map(f => [f[0], f[1]])); }
+  return g._byPos;
 }
+const CCATN = DATA.ccats.map(c => nnorm(c).toLowerCase().replace(/[^a-z0-9]/g, ''));
+function groupIndex(){
+  if (!GI){ GI = new Map(); GRUPOS.forEach((g, i) => GI.set(g.id, i)); }
+  return GI;
+}
+let GI = null;
+
+/* ---------- meses ---------- */
+const MESES_LIST = (() => { const s = new Set(); DATA.contratos.forEach(r => s.add(toMonth(r[4]))); return [...s].sort(); })();
 
 /* ---------- estado ---------- */
-let TAB = 'resumen', MES = DATA.mesDef, GSEL = null;
+let TAB = 'resumen', MES = MESES_LIST[MESES_LIST.length - 1], DUR = '', GSEL = null;
+const BSEL = new Set(['A']);
+const DUR_LBL = { C: 'cortos', L: 'no cortos', X: 'indeterminados', V: 'vacantes' };
 function setTab(t){
   TAB = t;
   $('tabResumen').classList.toggle('on', t === 'resumen');
@@ -268,34 +288,96 @@ function setTab(t){
 }
 $('tabResumen').addEventListener('click', () => setTab('resumen'));
 $('tabBuscar').addEventListener('click', () => setTab('buscar'));
+$('fContr').addEventListener('change', () => {
+  DUR = $('fContr').value;
+  renderTabla();
+  if (GSEL != null) renderGrupo(GSEL);
+});
 
 /* ---------- regla de contrato corto (misma que Contrataciones) ---------- */
 function esCorto(ini, fin){
   if (fin != null) return (fin - ini + 1) <= 5;
-  const p = toISO(ini).split('-');
-  const ult = new Date(Date.UTC(+p[0], +p[1], 0));
-  if (toISO(ini) > DATA.corte) return null;
-  const dia = +p[2];
-  const corteP = DATA.corte.split('-');
-  const diasTrans = (Date.UTC(+corteP[0], +corteP[1] - 1, +corteP[2]) - Date.UTC(+p[0], +p[1] - 1, dia)) / 86400000;
-  return diasTrans > 5 ? false : null;
+  const s = toISO(ini);
+  if (s > DATA.corte) return null;
+  const dias = (Date.parse(DATA.corte) - Date.parse(s)) / 86400000;
+  return dias > 5 ? false : null;
+}
+/* clase de contrato: C corto · L no corto · X indeterminado · V vacante (interinidad) */
+function claseContrato(r){
+  if (r[7] === 'I') return 'V';
+  const c = esCorto(r[4], r[5]);
+  return c === true ? 'C' : (c === false ? 'L' : 'X');
 }
 
-/* ---------- KPIs ---------- */
-function contratosDelMes(m){ return DATA.contratos.filter(c => toMonth(c[4]) === m); }
+/* ---------- análisis por grupo y mes (respeta el filtro de contratos) ---------- */
+let AN = {};
+function analisis(mes, dur){
+  const k = (mes || '') + '|' + (dur || '');
+  if (AN[k]) return AN[k];
+  const cnt = new Map(), llam = new Map();
+  DATA.contratos.forEach(r => {
+    if (dur && claseContrato(r) !== dur) return;
+    const m = toMonth(r[4]);
+    if (mes && m !== mes) return;
+    const GI = groupIndex();
+    const catn = CCATN[r[1]], dpto = DATA.dpts[r[2]], pi = r[6] === 'P';
+    const giPi = pi ? GI.get(catn + '|1|' + dpto) : null;
+    const giOr = GI.get(catn + '|0|' + dpto);
+    const propio = giPi != null ? giPi : giOr;
+    if (propio == null) return;
+    if (!cnt.has(propio)) cnt.set(propio, {});
+    const o = cnt.get(propio);
+    o[m] = (o[m] || 0) + 1;
+    let hit = null;
+    const tries = [propio];
+    const otro = propio === giOr ? giPi : giOr;
+    if (otro != null) tries.push(otro);
+    for (const gi of tries){
+      const byN = filasPorNi(gi);
+      if (byN.has(r[0])){ hit = [gi, byN.get(r[0])[0][0]]; break; }
+      if (r[3] != null && posMap(gi).get(r[3]) === r[0]){ hit = [gi, r[3]]; break; }
+    }
+    if (hit){
+      if (!llam.has(hit[0])) llam.set(hit[0], new Map());
+      const lm = llam.get(hit[0]);
+      if (!lm.has(m)) lm.set(m, new Set());
+      lm.get(m).add(hit[1]);
+    }
+  });
+  AN[k] = { cnt, llam };
+  return AN[k];
+}
+function llamadosDe(gi, mes, dur){
+  const lm = analisis(mes, dur).llam.get(gi);
+  return (lm && lm.get(mes)) || new Set();
+}
+function ultimaLlamada(gi, puesto){
+  const lm = analisis(null, '').llam.get(gi);
+  if (!lm) return null;
+  for (let i = MESES_LIST.length - 1; i >= 0; i--){
+    const s = lm.get(MESES_LIST[i]);
+    if (s && s.has(puesto)) return MESES_LIST[i];
+  }
+  return null;
+}
+
+/* ---------- KPIs (siempre sobre todos los contratos) ---------- */
 function renderKpis(){
-  const rows = contratosDelMes(MES);
-  let cortos = 0, indet = 0;
-  rows.forEach(r => { const c = esCorto(r[4], r[5]); if (c === true) cortos++; else if (c === null) indet++; });
-  let llam = 0;
-  GRUPOS.forEach(g => { llam += (g.llam[MES] || []).length; });
+  const rows = DATA.contratos.filter(r => toMonth(r[4]) === MES);
+  let cortos = 0, indet = 0, vac = 0;
+  rows.forEach(r => {
+    if (r[7] === 'I') vac++;
+    const c = esCorto(r[4], r[5]);
+    if (c === true) cortos++; else if (c === null) indet++;
+  });
   const personas = new Set(rows.map(r => r[0])).size;
   $('kpis').innerHTML = [
     [rows.length, 'Contratos del mes'],
     [personas, 'Personas contratadas'],
     [cortos, 'Cortos (5 días o menos)'],
+    [rows.length - cortos - (rows.filter(r => esCorto(r[4], r[5]) === null).length), 'Más de 5 días'],
     [indet, 'Indeterminados'],
-    [llam, 'Llamadas con bolsa activa']
+    [vac, 'Vacantes (interinidad)']
   ].map(k => '<div class="kpi"><div class="n">' + k[0] + '</div><div class="l">' + ncell(k[1]) + '</div></div>').join('');
 }
 
@@ -314,20 +396,23 @@ function filtrarGrupos(){
   return list;
 }
 function renderTabla(){
+  const a = analisis(MES, DUR);
   const tb = $('tbody');
   tb.innerHTML = '';
   filtrarGrupos().forEach(({ g, i }) => {
-    const nC = g.meses[MES] || 0;
-    const llam = g.llam[MES] || [];
-    const maxL = llam.length ? llam.reduce((a, b) => Math.max(a, b)) : null;
+    const cAll = a.cnt.get(i) || {};
+    const nC = cAll[MES] || 0;
+    const llamPos = llamadosDe(i, MES, DUR);
+    const maxL = llamPos.size ? Math.max(...llamPos) : null;
+    const crit = Object.keys(g.cnt).map(b => DATA.bucketLbl[b] + ': ' + g.cnt[b]).join(' · ');
     const tr = document.createElement('tr');
     tr.className = 'grprow' + (GSEL === i ? ' sel' : '');
     tr.innerHTML = '<td>' + ncell(g.cat) + '</td><td>' + ncell(g.dpto) + '</td>'
       + '<td>' + (g.pi ? '<span class="chip">Pi</span>' : '<span class="chip nan">Ord</span>') + '</td>'
       + '<td style="text-align:right">' + g.filas.length + '</td>'
-      + '<td style="text-align:right">' + (g.cnt.A || 0) + '</td>'
+      + '<td style="text-align:right" title="' + ncell(crit) + '">' + (g.cnt.A || 0) + '</td>'
       + '<td style="text-align:right">' + (nC || '<span class="muted">0</span>') + '</td>'
-      + '<td style="text-align:right">' + (llam.length || '<span class="muted">0</span>') + '</td>'
+      + '<td style="text-align:right">' + (llamPos.size || '<span class="muted">0</span>') + '</td>'
       + '<td>' + (maxL != null ? '<span class="pill">' + maxL + '</span>' : '<span class="muted">—</span>') + '</td>'
       + '<td class="mini">ver ›</td>';
     tr.addEventListener('click', () => {
@@ -350,23 +435,50 @@ function initFiltros(){
 
 /* ---------- detalle de grupo ---------- */
 function renderGrupo(gi){
+  window.__GI__ = gi;
   const g = GRUPOS[gi];
   $('gTitle').textContent = g.cat + ' · ' + g.dpto + (g.pi ? ' · Promoción interna' : '');
-  $('gSub').textContent = 'Bolsa con datos del ' + DATA.fBolsa + ' · contratos hasta el ' + DATA.corte + ' · ' + g.filas.length + ' candidatos · ' + (g.cnt.A || 0) + ' activos';
-  const ms = Object.keys(DATA.totMes).sort();
-  const vals = ms.map(m => g.meses[m] || 0);
-  const max = Math.max(1, ...vals);
-  $('gBars').innerHTML = ms.map((m, i) =>
-    '<div class="bar-row"><span>' + m + '</span><div><div class="bar' + (m === MES ? ' hoy' : '') + '" style="width:' + Math.max(2, Math.round(100 * vals[i] / max)) + '%"></div></div><span>' + (vals[i] || '') + '</span></div>'
-  ).join('');
+  $('gSub').textContent = 'Bolsa con datos del ' + DATA.fBolsa + ' · contratos hasta el ' + DATA.corte
+    + ' · ' + g.filas.length + ' candidatos · '
+    + Object.keys(g.cnt).map(b => g.cnt[b] + ' ' + DATA.bucketLbl[b].toLowerCase()).join(', ');
+  $('lBars').textContent = 'Personas de esta bolsa con contrato, por mes' + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '');
+  const aAll = analisis(null, DUR);
+  const cAll = aAll.cnt.get(gi) || {};
+  const max = Math.max(1, ...MESES_LIST.map(m => cAll[m] || 0));
+  $('gBars').innerHTML = MESES_LIST.map(m => {
+    const v = cAll[m] || 0;
+    return '<div class="bar-row"><span>' + m + '</span><div><div class="bar' + (m === MES ? ' hoy' : '') + '" style="width:' + Math.max(2, Math.round(100 * v / max)) + '%"></div></div><span>' + (v || '') + '</span></div>';
+  }).join('');
+  renderBuckets(gi);
   $('fPuesto').oninput = () => renderEstim(gi);
   renderEstim(gi);
   renderLlamados(gi);
 }
-function activosDelante(g, v){
-  let a = 0, b = g.act.length;
-  while (a < b){ const m = (a + b) >> 1; if (g.act[m] < v) a = m + 1; else b = m; }
-  return a;
+function renderBuckets(gi){
+  const g = GRUPOS[gi];
+  const order = ['A', 'V', 'B', 'R', 'N', 'O'].filter(b => g.cnt[b]);
+  $('kBuckets').innerHTML = order.map(b =>
+    '<label class="buckchk"><input type="checkbox" class="bucketChk" data-b="' + b + '"' + (BSEL.has(b) ? ' checked' : '') + '> '
+    + ncell(DATA.bucketLbl[b]) + ' <span class="mini">(' + g.cnt[b] + ')</span></label>'
+  ).join('');
+  $('kBuckets').querySelectorAll('.bucketChk').forEach(ch => {
+    ch.addEventListener('change', () => {
+      if (ch.checked) BSEL.add(ch.dataset.b); else BSEL.delete(ch.dataset.b);
+      if (!BSEL.size) BSEL.add('A');
+      renderEstim(gi);
+      renderLlamados(gi);
+      if (GSEL != null) renderTabla();
+    });
+  });
+}
+/* puestos por delante (puesto < v), contados por bucket de situación */
+function delantePorSitu(g, v){
+  const t = {};
+  for (const f of g.filas){
+    if (f[0] >= v) break;
+    t[f[2]] = (t[f[2]] || 0) + 1;
+  }
+  return t;
 }
 function renderEstim(gi){
   const g = GRUPOS[gi];
@@ -374,40 +486,47 @@ function renderEstim(gi){
   const out = $('estOut');
   if (isNaN(v)){ out.className = 'mini'; out.textContent = 'Escribe tu nº de puesto.'; return; }
   out.className = '';
-  const enAct = g.act.includes(v);
-  if (!enAct){
-    out.innerHTML = '<span class="tag indent">—</span> <span class="mini">Ese puesto no figura como ACTIVO en esta bolsa (revisa el número, o el turno si es promoción interna).</span>';
+  if (!g.filas.some(f => f[0] === v)){
+    out.innerHTML = '<span class="tag indent">—</span> <span class="mini">Ese puesto no figura en esta bolsa (revisa el número, o el turno si es promoción interna).</span>';
     return;
   }
-  const delante = activosDelante(g, v);
-  const ms = Object.keys(DATA.totMes).sort();
-  const pos = ms.indexOf(MES);
-  const prev = (pos < 0 ? ms.slice(-6) : ms.slice(Math.max(0, pos - 6), pos)).map(m => (g.llam[m] || []).length);
-  const media = prev.length ? prev.reduce((a, x) => a + x, 0) / prev.length : 0;
+  const t = delantePorSitu(g, v);
+  const delante = [...BSEL].reduce((a, b) => a + (t[b] || 0), 0);
+  const lm = analisis(null, DUR).llam.get(gi) || new Map();
+  const msIdx = MESES_LIST.indexOf(MES);
+  const prev = MESES_LIST.slice(Math.max(0, msIdx - 6), msIdx < 0 ? MESES_LIST.length : msIdx);
+  const media = prev.length ? prev.reduce((a, m) => a + ((lm.get(m) || new Set()).size), 0) / prev.length : 0;
   const est = media > 0 ? Math.ceil(delante / media) : null;
-  const llamado = (g.llam[MES] || []).includes(v);
+  const desglose = ['A', 'V', 'B', 'R', 'N', 'O'].filter(b => t[b]).map(b =>
+    '<span class="tag' + (BSEL.has(b) ? ' largo' : '') + '">' + ncell(DATA.bucketLbl[b]) + ': ' + t[b] + '</span>'
+  ).join(' ');
+  const llamado = llamadosDe(gi, MES, DUR).has(v);
   let txt = '<div class="big-est">' + (est != null ? est : '—') + '</div>'
     + '<div class="mini">meses aproximadamente, si se mantiene el ritmo de los últimos 6 meses</div>'
-    + '<div class="mini" style="margin-top:.4rem">' + delante + ' activos por delante · media ' + media.toFixed(1) + ' llamadas/mes</div>';
+    + '<div class="mini" style="margin-top:.4rem">' + delante + ' puesto/s por delante · ' + (DUR ? DUR_LBL[DUR] + ': ' : '') + 'media ' + media.toFixed(1) + ' llamadas/mes</div>'
+    + (delante ? '<div style="margin-top:.5rem">' + desglose + '</div>' : '');
   if (llamado) txt += '<div style="margin-top:.5rem"><span class="tag corto">⬤ llamada en ' + mesTxt(MES) + '</span></div>';
   out.innerHTML = txt;
 }
 function renderLlamados(gi){
   const g = GRUPOS[gi];
-  const llam = g.llam[MES] || [];
+  const llamPos = llamadosDe(gi, MES, DUR);
   const byP = new Map(g.filas.map(f => [f[0], f]));
-  const list = llam.map(p => {
+  const list = [...llamPos].sort((a, b) => a - b).map(p => {
     const f = byP.get(p);
     const s = f ? g.situ[f[3]] : '';
     return '<span class="pill" title="' + ncell(s) + '">' + p + ' · ' + ncell(f ? NAMES[f[1]] : '?') + '</span>';
   }).join('');
-  const L = new Set(llam);
   let siguiente = null;
-  for (const p of g.act){ if (!L.has(p)){ siguiente = p; break; } }
-  $('gLlamInfo').textContent = llam.length
-    ? 'En ' + mesTxt(MES) + ' hubo ' + llam.length + ' personas de esta bolsa con contrato (por nombre).' + (siguiente != null ? ' El siguiente activo no llamado es el puesto ' + siguiente + '.' : '')
-    : 'En ' + mesTxt(MES) + ' no hubo contratos que recayeran en personas de esta bolsa (por nombre).';
-  $('gLlamChips').innerHTML = list ? '<h3 class="mini" style="margin:0 0 .3rem">Llamados en ' + mesTxt(MES) + '</h3>' + list : '';
+  for (const f of g.filas){
+    if (BSEL.has(f[2]) && !llamPos.has(f[0])){ siguiente = f[0]; break; }
+  }
+  const queSit = BSEL.size === 1 && BSEL.has('A') ? 'activo' : 'en las situaciones marcadas';
+  $('gLlamInfo').textContent = llamPos.size
+    ? 'En ' + mesTxt(MES) + ' hubo ' + llamPos.size + ' personas de esta bolsa con contrato' + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '') + ' (por nombre).'
+      + (siguiente != null ? ' El siguiente puesto ' + queSit + ' no llamado es el ' + siguiente + '.' : '')
+    : 'En ' + mesTxt(MES) + ' no hubo contratos' + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '') + ' que recayeran en personas de esta bolsa (por nombre).';
+  $('gLlamChips').innerHTML = list ? '<h3 class="mini" style="margin:0 0 .3rem">Llamados en ' + mesTxt(MES) + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '') + '</h3>' + list : '';
   $('gLlamList').innerHTML = list || '<span class="mini">—</span>';
 }
 
@@ -445,12 +564,14 @@ function showPersona(ni){
   const rows = [];
   GRUPOS.forEach((g, gi) => {
     (filasPorNi(gi).get(ni) || []).forEach(f => {
-      const llamada = (g.llam[MES] || []).includes(f[0]);
+      const llamada = llamadosDe(gi, MES, DUR).has(f[0]);
+      const ult = ultimaLlamada(gi, f[0]);
       rows.push('<div class="person-row" style="cursor:default"><b>' + ncell(g.cat) + ' · ' + ncell(g.dpto) + (g.pi ? ' Pi' : '') + '</b>'
         + '<span class="pill">puesto ' + f[0] + '</span>'
         + '<span class="chip ' + f[2] + '">' + ncell(DATA.bucketLbl[f[2]] || '') + '</span>'
         + '<span class="mini">' + ncell(g.situ[f[3]]) + '</span>'
         + (llamada ? '<span class="tag corto">⬤ llamada en ' + mesTxt(MES) + '</span>' : '')
+        + (!llamada && ult ? '<span class="tag largo">últ. llamada: ' + mesTxt(ult) + '</span>' : '')
         + '</div>');
     });
   });
@@ -458,8 +579,9 @@ function showPersona(ni){
   const cs = DATA.contratos.filter(c => c[0] === ni).sort((a, b) => b[4] - a[4]).slice(0, 60);
   $('pContratos').innerHTML = cs.map(c => {
     const corto = esCorto(c[4], c[5]);
-    const cls = corto === true ? 'corto' : (corto === false ? 'largo' : 'indent');
-    const lbl = corto === true ? 'corto' : (corto === false ? '' : 'indeterminado');
+    const clas = claseContrato(c);
+    const lbl = clas === 'V' ? 'vacante' : (corto === true ? 'corto' : (corto === false ? '' : 'indeterminado'));
+    const cls = clas === 'V' ? 'indent' : (corto === true ? 'corto' : (corto === false ? 'largo' : ''));
     const perf = (c[10] != null && DATA.perfiles[c[10]]) ? ' · ' + ncell(DATA.perfiles[c[10]]) : '';
     return '<li><b>' + dTxt(c[4]) + '</b> → ' + dTxt(c[5]) + ' <span class="tag ' + cls + '">' + lbl + '</span>'
       + '<span class="mini">' + ncell(DATA.ccats[c[1]]) + ' · ' + ncell(DATA.dpts[c[2]]) + perf + '</span>'
@@ -473,13 +595,13 @@ function showPersona(ni){
   $('personaPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-/* ---------- selector de mes y arranque ---------- */
+/* ---------- arranque ---------- */
 function initMes(){
-  const sel = $('fMes');
-  const ms = Object.keys(DATA.totMes).sort().reverse();
-  sel.innerHTML = ms.map(m => '<option value="' + m + '"' + (m === DATA.mesDef ? ' selected' : '') + '>' + mesTxt(m) + '</option>').join('');
-  sel.addEventListener('change', () => {
-    MES = sel.value;
+  $('fMes').innerHTML = MESES_LIST.slice().reverse().map(m =>
+    '<option value="' + m + '"' + (m === MES ? ' selected' : '') + '>' + mesTxt(m) + '</option>'
+  ).join('');
+  $('fMes').addEventListener('change', () => {
+    MES = $('fMes').value;
     renderKpis(); renderTabla();
     if (GSEL != null) renderGrupo(GSEL);
   });
@@ -489,8 +611,14 @@ function init(){
   initMes(); initFiltros(); renderKpis(); renderTabla();
   setTab('resumen');
 }
-window.__PANEL__ = { renderGrupo, showPersona, renderEstim, DATA, setMes: m => { MES = m; } };
-if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+window.__PANEL__ = {
+  renderGrupo, showPersona, renderEstim, renderLlamados, renderKpis, renderTabla,
+  analisis, claseContrato, esCorto, delantePorSitu, ultimaLlamada, llamadosDe,
+  DATA, setMes: m => { MES = m; }, setDur: d => { DUR = d; },
+  toggleBucket: b => { if (BSEL.has(b)) BSEL.delete(b); else BSEL.add(b); },
+  buckets: BSEL
+};
+if ('serviceWorker' in navigator){ window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {})); }
 </script>
 </body>
 </html>

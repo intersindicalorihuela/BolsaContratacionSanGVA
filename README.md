@@ -17,10 +17,21 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
 - **Detalle de bolsa**: evolución mensual de llamadas, **estimación de espera**
   (activos por delante ÷ llamadas medias de los últimos 6 meses), el siguiente activo
   no llamado y el listado de puestos llamados con nombre y situación.
+- **Filtro de contratos**: menú desplegable (cabecera) para ver en detalle solo los
+  **cortos (5 días o menos)**, **no cortos (más de 5)**, **indeterminados** o
+  **vacantes (interinidad)**. Afecta a la tabla de bolsas, a las barras mensuales,
+  a los llamados del mes y a la media usada en la estimación. Las tarjetas de arriba
+  muestran siempre el desglose completo del mes (cortos, más de 5 días, indeterminados
+  y vacantes).
+- **"¿Cuánto queda?" por situación**: al consultar tu puesto se desglosan los
+  candidatos que tienes **por delante según su situación en bolsa** (ACTIVO, ACTIVO EN
+  PLAZA VACANTE, BLOQUEADO, RESERVADO, NO DISPONIBLE...), y con casillas eliges qué
+  situaciones cuentan para la estimación (por defecto solo ACTIVO). El "siguiente
+  puesto no llamado" también respeta ese filtro.
 - **Por nombre**: buscador sobre las dos fuentes a la vez — situación actual en cada
-  bolsa donde consta la persona y todos sus contratos (fechas, departamento, tipo de
-  nombramiento, breve, jornada y duración corto/indeterminado con la misma regla de
-  5 días de la app de Contrataciones).
+  bolsa donde consta la persona, su **última llamada** y todos sus contratos (fechas,
+  departamento, tipo de nombramiento, breve, jornada y duración corto/indeterminado
+  con la misma regla de 5 días de la app de Contrataciones).
 
 Mismo código de acceso que las otras apps (pídelo a tu delegado/a sindical).
 
@@ -56,8 +67,9 @@ manifest.json, sw.js, iconos   PWA, igual que las otras dos apps
 ## Cómo cruza los datos (importante)
 
 - El cruce es **por nombre normalizado** dentro de la misma bolsa (categoría +
-  departamento, o su bolsa Pi si el contrato es de promoción interna): se quitan
-  tildes, `Mª`/`M.` se tratan como `MARIA` y se colapsan espacios.
+  departamento; los contratos de promoción interna cuentan solo en su bolsa Pi, y si
+  no existe, en la ordinaria): se quitan tildes, `Mª`/`M.` se tratan como `MARIA` y
+  se colapsan espacios.
 - El campo `pos` de contrataciones **no** es el puesto en bolsa de quien la recibe
   (coincide con nombre y puesto solo en ~7% de los casos); se usa como pista
   secundaria, no como clave.

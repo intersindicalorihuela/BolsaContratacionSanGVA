@@ -4,13 +4,12 @@ de BolsaSanGVA y Contrataciones. El cruce se precomputa aquí, en el build:
 el HTML final solo lleva resultados agregados, no los dos datasets enteros.
 
 Uso:
-  python3 build-panel.py --bolsa <ruta|url> --contrataciones <ruta|url> --out ../panel/index.html
+  python3 build-panel.py --bolsa <ruta|url> --contrataciones <ruta|url> --out ../index.html
 
 Las rutas pueden ser ficheros locales o URLs (GitHub Pages).
 """
 import argparse, json, re, unicodedata, datetime as dt
 import urllib.request
-from collections import defaultdict
 
 DPTS = ["ELCHE", "ORIHUELA", "TORREVIEJA"]
 EPOCH = dt.date(1970, 1, 1)
@@ -141,7 +140,6 @@ def main():
     nidx = {n: i for i, n in enumerate(names)}
 
     ccats = contra["cats"]
-    ccatsN = {catnorm(c): c for c in ccats}
 
     # --- grupos de bolsa ---
     grupos = []
@@ -152,11 +150,13 @@ def main():
         kstr = f"{catnorm(base)}|{'1' if pi else '0'}|{dpto}"
         gi = gidx.get(kstr)
         if gi is None:
-            cc = ccatsN.get(catnorm(base))
-            cat_lbl = CAT_LABELS.get(cc, CAT_LABELS.get(base, base.replace("_", " ").title())) if cc else \
-                      CAT_LABELS.get(base, base.replace("_", " ").title())
+            cat_lbl = CAT_LABELS.get(base, base.replace("_", " ").title())
+            for lbl in ccats:
+                if catnorm(lbl) == catnorm(base):
+                    cat_lbl = CAT_LABELS.get(lbl, lbl.title())
+                    break
             grupos.append({"id": kstr, "cat": cat_lbl, "pi": pi, "dpto": dpto,
-                           "situ": [], "filas": [], "act": [], "meses": {}, "llam": {}, "cnt": {}})
+                           "situ": [], "filas": [], "act": [], "cnt": {}})
             gi = len(grupos) - 1
             gidx[kstr] = gi
         g = grupos[gi]
@@ -171,54 +171,11 @@ def main():
                 g["act"].append(int(row[0]))
         g["filas"] = filas
 
-    # --- contratos: meses por grupo + puestos llamados (por nombre) ---
-    pos2ni = [dict((f[0], f[1]) for f in g["filas"]) for g in grupos]
-    name2ni = [set(f[1] for f in g["filas"]) for g in grupos]
-    meses_by_g = [defaultdict(int) for _ in grupos]
-    llam_by_g = [defaultdict(set) for _ in grupos]
-    for r in sel:
-        catn = catnorm(ccats[r[1]])
-        dpto = contra["dptos"][r[3]]
-        pi = r[7] == "P"
-        m = (EPOCH + dt.timedelta(days=r[5])).strftime("%Y-%m")
-        ni = nidx[nnorm(r[0])]
-        cand = [catn + "|1|" + dpto, catn + "|0|" + dpto] if pi else [catn + "|0|" + dpto]
-        hit = None
-        for kstr in cand:
-            gi = gidx.get(kstr)
-            if gi is None:
-                continue
-            meses_by_g[gi][m] += 1
-            if hit is None:
-                if ni in name2ni[gi]:
-                    hit = gi
-                elif r[4] is not None and pos2ni[gi].get(r[4]) == ni:
-                    hit = gi
-        if hit is not None:
-            # puesto: el que la persona tiene en ese grupo
-            gi = hit
-            for puesto, n2, _, _ in grupos[gi]["filas"]:
-                if n2 == ni:
-                    llam_by_g[gi][m].add(puesto)
-                    break
-            else:
-                if r[4] is not None and r[4] in pos2ni[gi]:
-                    llam_by_g[gi][m].add(r[4])
-
-    tot_mes = defaultdict(int)
-    for r in sel:
-        tot_mes[(EPOCH + dt.timedelta(days=r[5])).strftime("%Y-%m")] += 1
-
-    for gi, g in enumerate(grupos):
-        g["meses"] = dict(sorted(meses_by_g[gi].items()))
-        g["llam"] = {m: sorted(ps) for m, ps in sorted(llam_by_g[gi].items())}
-
     maxf = EPOCH + dt.timedelta(days=contra["maxfecha"])
     dcorte = EPOCH + dt.timedelta(days=contra["corte"])
     data = {
         "fBolsa": bolsa.get("generated", ""),
         "corte": dcorte.isoformat(),
-        "mesDef": maxf.strftime("%Y-%m"),
         "dpts": DPTS,
         "bucketLbl": BUCKET_LBL,
         "names": names,
@@ -230,7 +187,6 @@ def main():
         "perfiles": contra["perfiles"],
         "tnom": {"A": "Acumulación de tareas", "C": "ATC/Guardias", "I": "Interinidad (vacante)",
                  "S": "Sustitución (también reserva de plaza)"},
-        "totMes": dict(sorted(tot_mes.items())),
     }
 
     html = open(args.tpl, encoding="utf-8").read()
@@ -242,9 +198,7 @@ def main():
 
     act_total = sum(g["cnt"].get("A", 0) for g in grupos)
     print(f"OK: {len(grupos)} grupos de bolsa · {len(names)} nombres · {len(sel)} contratos en {'+'.join(DPTS)}")
-    print(f"    activos: {act_total} · meses con datos: {min(tot_mes)}..{max(tot_mes)} · corte {data['corte']} · bolsa {data['fBolsa']}")
-    llam_ult = sum(len(g["llam"].get(data["mesDef"], [])) for g in grupos)
-    print(f"    personas llamadas en {data['mesDef']} (match nombre+puesto): {llam_ult}")
+    print(f"    activos: {act_total} · corte {data['corte']} · bolsa {data['fBolsa']}")
     import os
     print(f"    {args.out}: {os.path.getsize(args.out)/1024:.0f} KB")
 
