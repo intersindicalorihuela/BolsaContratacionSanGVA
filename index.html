@@ -8,6 +8,12 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png" type="image/png">
 <meta name="theme-color" content="#BB2B09">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Panel Bolsa · Sanidad GVA · Intersindical Salut">
+<meta property="og:description" content="Combina tu posición en la bolsa de trabajo con las contrataciones de los últimos meses. Herramienta de Intersindical Salut Orihuela.">
+<meta property="og:image" content="https://intersindicalorihuela.github.io/BolsaContratacionSanGVA/icon-512.png">
+<meta property="og:url" content="https://intersindicalorihuela.github.io/BolsaContratacionSanGVA/">
+<meta name="twitter:card" content="summary">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
   :root{
@@ -35,13 +41,22 @@
   .err{display:none;background:var(--red-tint);border:1px solid var(--red-tint-border);color:var(--red-deep);border-radius:7px;padding:.55rem .75rem;font-size:.82rem;margin-bottom:.8rem}
   .footnote{font-size:.74rem;color:var(--ink-soft);margin-top:1rem;line-height:1.5}
   #appRoot{display:none}
-  header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
-  .hwrap{max-width:1080px;margin:0 auto;padding:.7rem 1rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
-  .hwrap h1{font-family:'Source Serif 4',serif;font-size:1.12rem;margin:0;flex:1 1 auto}
-  .stamp{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--ink-soft)}
+  #topbar{background:var(--red);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(29,27,26,.18)}
+  #topbar .twrap{max-width:1080px;margin:0 auto;padding:.45rem .8rem;display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;font-size:.78rem}
+  #topbar .ses{margin-left:auto;opacity:.92}
   .tabs{display:flex;gap:.25rem}
-  .tab{font-size:.85rem;font-weight:600;padding:.45rem .8rem;border-radius:8px;cursor:pointer;color:var(--ink-soft);background:transparent;border:1px solid transparent}
-  .tab.on{background:var(--red-tint);color:var(--red-deep);border-color:var(--red-tint-border)}
+  .tab{font-size:.85rem;font-weight:600;padding:.45rem .8rem;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.9);background:transparent;border:1px solid transparent}
+  .tab.on{background:rgba(255,255,255,.22);color:#fff;border-color:rgba(255,255,255,.35)}
+  #topbar select{font-size:.78rem;padding:.3rem .4rem;max-width:200px}
+  #topbar .link-btn{background:none;border:none;color:#fff;font-family:'Inter',sans-serif;font-size:.78rem;text-decoration:underline;cursor:pointer;padding:0}
+  header.hero{background:var(--card);border-bottom:1px solid var(--line)}
+  .hero .hwrap{max-width:1080px;margin:0 auto;padding:1.1rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:.95rem}
+  .brand img.logo{width:60px;height:60px;object-fit:contain;flex:0 0 auto}
+  .brand h1{font-family:'Source Serif 4',serif;font-size:1.95rem;font-weight:700;margin:0;line-height:1.12}
+  .brand-desc{font-size:.88rem;color:var(--ink-soft);margin:.3rem 0 0;max-width:580px;line-height:1.45}
+  .stamp{border:1.5px solid var(--red);border-radius:9px;background:#fff;padding:.55rem .95rem;font-size:.82rem;font-weight:600;color:var(--ink);white-space:nowrap}
+  .stamp .stampn{font-family:'IBM Plex Mono',monospace;font-size:.8rem;font-weight:600;color:var(--red-deep)}
   main{max-width:1080px;margin:0 auto;padding:1.2rem 1rem 4rem}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:.7rem;margin-bottom:1.1rem}
   .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem .9rem;box-shadow:var(--shadow)}
@@ -74,6 +89,9 @@
   .bar{height:12px;background:var(--red);border-radius:3px;min-width:1px}
   .bar.hoy{background:var(--red-deep)}
   .pill{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:500;background:var(--red-tint);color:var(--red-deep);border:1px solid var(--red-tint-border);border-radius:16px;padding:.12rem .55rem;margin:.12rem .18rem .12rem 0}
+  .pill small{font-size:.88em;font-weight:400}
+  button.pill.poslink{cursor:pointer;font-family:'IBM Plex Mono',monospace}
+  button.pill.poslink:hover{border-color:var(--red);background:#F7DCD2}
   details>summary{cursor:pointer;font-size:.82rem;font-weight:600;color:var(--red-deep)}
   .big-est{font-family:'Source Serif 4',serif;font-size:1.7rem;font-weight:700;color:var(--red-deep)}
   .muted{color:var(--ink-soft)}
@@ -92,7 +110,7 @@
   .buckchk{display:inline-flex;align-items:center;gap:.3rem;margin:0 .7rem .3rem 0;font-size:.78rem;cursor:pointer;user-select:none}
   .buckchk input{width:auto;margin:0}
   footer{max-width:1080px;margin:2.5rem auto 0;padding:1rem 1rem 2.5rem;border-top:1px solid var(--line);font-size:.74rem;color:var(--ink-soft)}
-  @media (max-width:640px){ .hwrap h1{font-size:1rem} .tab{padding:.4rem .6rem} }
+  @media (max-width:640px){ .brand h1{font-size:1.35rem} .brand img.logo{width:46px;height:46px} .brand-desc{font-size:.8rem} .tab{padding:.4rem .6rem} .stamp{font-size:.74rem} }
 </style>
 </head>
 <body>
@@ -110,10 +128,12 @@
 </div>
 
 <div id="appRoot">
-  <header>
-    <div class="hwrap">
-      <h1>Panel Bolsa <span class="accent-b">·</span> Sanidad GVA</h1>
-      <span class="stamp" id="stamp"></span>
+  <div id="topbar">
+    <div class="twrap">
+      <nav class="tabs">
+        <button class="tab on" id="tabResumen">Resumen</button>
+        <button class="tab" id="tabBuscar">Por nombre</button>
+      </nav>
       <select id="fContr" style="width:auto" title="Qué contratos se muestran en detalle">
         <option value="">Todos los contratos</option>
         <option value="C">Cortos (5 días o menos)</option>
@@ -122,11 +142,21 @@
         <option value="V">Vacantes (interinidad)</option>
       </select>
       <select id="fMes" style="width:auto"></select>
-      <nav class="tabs">
-        <button class="tab on" id="tabResumen">Resumen</button>
-        <button class="tab" id="tabBuscar">Por nombre</button>
-      </nav>
-      <button class="btn secondary" id="logoutBtn" style="padding:.4rem .7rem;font-size:.75rem">Salir</button>
+      <span class="ses">Sesión: <b id="sesNombre"></b></span>
+      <button type="button" class="link-btn" id="logoutBtn">Cambiar de usuario</button>
+    </div>
+  </div>
+
+  <header class="hero">
+    <div class="hwrap">
+      <div class="brand">
+        <img class="logo" src="icon-512.png" alt="Intersindical Salut Orihuela">
+        <div>
+          <h1>Panel Bolsa <span class="accent-b">·</span> Sanidad GVA</h1>
+          <p class="brand-desc">Consulta tu posición en la bolsa de trabajo, los contratos de los últimos meses (fechas de inicio y fin) y busca a cualquier persona por nombre.</p>
+        </div>
+      </div>
+      <div class="stamp">▦ Datos actualizados a:<br><span class="stampn" id="fechaActualizacion">—</span></div>
     </div>
   </header>
 
@@ -231,10 +261,15 @@ function mesTxt(m){ const p = m.split('-'); return MESES[+p[1] - 1] + ' ' + p[0]
 function toISO(d){ return new Date(Date.UTC(1970, 0, 1) + d * 86400000).toISOString().slice(0, 10); }
 function toMonth(d){ return toISO(d).slice(0, 7); }
 function dTxt(d){ if (d == null) return 'sin fin'; const p = toISO(d).split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+function fechaTxt(iso){ const p = String(iso).split('-'); return (+p[2]) + ' de ' + MESES[+p[1] - 1] + ' de ' + p[0]; }
 
 /* ---------- acceso ---------- */
 (function(){
-  function show(){ $('loginOverlay').style.display = 'none'; $('appRoot').style.display = 'block'; init(); }
+  function show(){
+    $('loginOverlay').style.display = 'none'; $('appRoot').style.display = 'block';
+    try { $('sesNombre').textContent = JSON.parse(sessionStorage.getItem(AUTH_KEY) || '{}').nombre || ''; } catch (e) {}
+    init();
+  }
   $('loginForm').addEventListener('submit', e => {
     e.preventDefault();
     const n = $('loginNombre').value.trim(), er = $('loginError');
@@ -518,7 +553,10 @@ function renderLlamados(gi){
   const list = [...llamPos].sort((a, b) => a - b).map(p => {
     const f = byP.get(p);
     const s = f ? g.situ[f[3]] : '';
-    return '<span class="pill" title="' + ncell(s) + '">' + p + ' · ' + ncell(f ? NAMES[f[1]] : '?') + '</span>';
+    const fechas = f ? contratosDe(f[1], MES).map(r => dTxt(r[4]) + (r[5] != null ? '→' + dTxt(r[5]) : '')).join(' · ') : '';
+    return '<span class="pill" title="' + ncell(s + (fechas ? ' · contratos: ' + fechas : '')) + '">'
+      + p + ' · ' + ncell(f ? NAMES[f[1]] : '?')
+      + (fechas ? ' <small>' + ncell(fechas) + '</small>' : '') + '</span>';
   }).join('');
   let siguiente = null;
   for (const f of g.filas){
@@ -537,7 +575,9 @@ function renderLlamados(gi){
 function grupoChips(gi, filasList){
   const g = GRUPOS[gi];
   return filasList.map(f =>
-    '<span class="mini">' + ncell(g.cat) + ' · ' + ncell(g.dpto) + (g.pi ? ' Pi' : '') + ' · puesto <b>' + f[0] + '</b></span>'
+    '<button type="button" class="pill poslink" data-gi="' + gi + '" data-p="' + f[0] + '"'
+    + ' title="Ver esta bolsa y este puesto en el Resumen">'
+    + ncell(g.cat) + ' · ' + ncell(g.dpto) + (g.pi ? ' Pi' : '') + ' · puesto ' + f[0] + '</button>'
   ).join(' ');
 }
 function renderSearch(){
@@ -557,6 +597,10 @@ function renderSearch(){
     return '<div class="person-row clickable" data-i="' + i + '"><b>' + ncell(NAMES[i]) + '</b>' + chips.join(' ') + '</div>';
   }).join('');
   box.querySelectorAll('.person-row').forEach(el => el.addEventListener('click', () => showPersona(+el.dataset.i)));
+  box.querySelectorAll('.poslink').forEach(el => el.addEventListener('click', ev => {
+    ev.stopPropagation();
+    abrirGrupoEnResumen(+el.dataset.gi, +el.dataset.p);
+  }));
 }
 $('fNombre').addEventListener('input', renderSearch);
 
@@ -570,7 +614,8 @@ function showPersona(ni){
       const llamada = llamadosDe(gi, MES, DUR).has(f[0]);
       const ult = ultimaLlamada(gi, f[0]);
       rows.push('<div class="person-row" style="cursor:default"><b>' + ncell(g.cat) + ' · ' + ncell(g.dpto) + (g.pi ? ' Pi' : '') + '</b>'
-        + '<span class="pill">puesto ' + f[0] + '</span>'
+        + '<button type="button" class="pill poslink" data-gi="' + gi + '" data-p="' + f[0] + '"'
+        + ' title="Abrir esta bolsa en el Resumen con este puesto">puesto ' + f[0] + '</button>'
         + '<span class="chip ' + f[2] + '">' + ncell(DATA.bucketLbl[f[2]] || '') + '</span>'
         + '<span class="mini">' + ncell(g.situ[f[3]]) + '</span>'
         + (llamada ? '<span class="tag corto">⬤ llamada en ' + mesTxt(MES) + '</span>' : '')
@@ -579,6 +624,7 @@ function showPersona(ni){
     });
   });
   $('pBolsa').innerHTML = rows.join('') || '<span class="mini">No consta en ninguna bolsa de ELCHE, ORIHUELA ni TORREVIEJA.</span>';
+  $('pBolsa').querySelectorAll('.poslink').forEach(el => el.addEventListener('click', () => abrirGrupoEnResumen(+el.dataset.gi, +el.dataset.p)));
   const cs = DATA.contratos.filter(c => c[0] === ni).sort((a, b) => b[4] - a[4]).slice(0, 60);
   $('pContratos').innerHTML = cs.map(c => {
     const corto = esCorto(c[4], c[5]);
@@ -586,7 +632,10 @@ function showPersona(ni){
     const lbl = clas === 'V' ? 'vacante' : (corto === true ? 'corto' : (corto === false ? '' : 'indeterminado'));
     const cls = clas === 'V' ? 'indent' : (corto === true ? 'corto' : (corto === false ? 'largo' : ''));
     const perf = (c[10] != null && DATA.perfiles[c[10]]) ? ' · ' + ncell(DATA.perfiles[c[10]]) : '';
-    return '<li><b>' + dTxt(c[4]) + '</b> → ' + dTxt(c[5]) + ' <span class="tag ' + cls + '">' + lbl + '</span>'
+    const dias = c[5] != null ? (c[5] - c[4] + 1) : null;
+    return '<li><b>' + dTxt(c[4]) + '</b> <span class="mini">a</span> <b>' + dTxt(c[5]) + '</b>'
+      + (dias != null ? '<span class="mini"> · ' + dias + ' d\u00eda' + (dias === 1 ? '' : 's') + '</span>' : ' <span class="mini">· sin fin</span>')
+      + ' <span class="tag ' + cls + '">' + lbl + '</span>'
       + '<span class="mini">' + ncell(DATA.ccats[c[1]]) + ' · ' + ncell(DATA.dpts[c[2]]) + perf + '</span>'
       + (c[3] != null ? '<span class="mini">puesto ' + c[3] + '</span>' : '')
       + '<span class="tag">' + (c[6] === 'O' ? 'ordinario' : 'prom. interna') + '</span>'
@@ -610,14 +659,39 @@ function initMes(){
   });
 }
 function init(){
-  $('stamp').textContent = '▣ bolsa ' + DATA.fBolsa + ' · contratos ' + DATA.corte;
+  $('fechaActualizacion').textContent = fechaTxt(DATA.fBolsa);
   initMes(); initFiltros(); renderKpis(); renderTabla();
   setTab('resumen');
 }
+/* abrir una bolsa (categoría + departamento) en el Resumen, con el puesto precargado */
+function abrirGrupoEnResumen(gi, puesto){
+  const g = GRUPOS[gi];
+  $('fDpto').value = g.dpto;
+  $('fCat').value = g.cat;
+  $('fTipo').value = g.pi ? 'pi' : '';
+  GSEL = gi;
+  setTab('resumen');
+  renderTabla();
+  renderGrupo(gi);
+  $('grpPanel').classList.add('open');
+  if (puesto != null){ $('fPuesto').value = String(puesto); renderEstim(gi); }
+  $('grpPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+/* contratos de una persona en un mes (con fechas inicio/fin) */
+let C_BY_N = null;
+function contratosDe(ni, mes){
+  if (!C_BY_N){
+    C_BY_N = new Map();
+    DATA.contratos.forEach(r => { if (!C_BY_N.has(r[0])) C_BY_N.set(r[0], []); C_BY_N.get(r[0]).push(r); });
+  }
+  return (C_BY_N.get(ni) || []).filter(r => toMonth(r[4]) === mes);
+}
+
 window.__PANEL__ = {
   renderGrupo, showPersona, renderEstim, renderLlamados, renderKpis, renderTabla,
   analisis, claseContrato, esCorto, delantePorSitu, ultimaLlamada, llamadosDe,
   DATA, setMes: m => { MES = m; }, setDur: d => { DUR = d; },
+  abrirGrupoEnResumen, contratosDe, fechaTxt,
   toggleBucket: b => { if (BSEL.has(b)) BSEL.delete(b); else BSEL.add(b); },
   buckets: BSEL
 };

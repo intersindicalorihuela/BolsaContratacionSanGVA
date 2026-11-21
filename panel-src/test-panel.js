@@ -126,5 +126,23 @@ P.showPersona(ni);
 check(E('pBolsa').innerHTML.length > 0, 'ficha: situación en bolsa');
 check(typeof P.ultimaLlamada(gi, (g.filas.find(f => f[1] === ni) || [])[0]) === 'string' || true, 'ultimaLlamada ejecutable');
 
+// --- visual: logo del sindicato, compartido en WhatsApp y fecha en espanol ---
+check(html.indexOf('property="og:image"') !== -1 && html.indexOf('icon-512.png') !== -1, 'og:image con el logo del repositorio (previsualizacion WhatsApp)');
+check(html.indexOf('<img class="logo" src="icon-512.png"') !== -1, 'logo del sindicato en la cabecera');
+check(E('fechaActualizacion').textContent === '15 de noviembre de 2026', 'fecha de datos legible en la cabecera (' + E('fechaActualizacion').textContent + ')');
+check(P.fechaTxt('2026-03-05') === '5 de marzo de 2026', 'fechaTxt en espanol');
+
+// --- puesto pincheable: ficha -> Resumen ---
+P.showPersona(ni);
+check(E('pBolsa').innerHTML.indexOf('poslink') !== -1, 'ficha: numero de puesto pincheable');
+P.abrirGrupoEnResumen(gi, g.filas[0][0]);
+check(E('fDpto').value === g.dpto && E('fCat').value === g.cat, 'pinchar puesto filtra la bolsa concreta');
+check(E('fPuesto').value === String(g.filas[0][0]), 'puesto precargado en Tu puesto en esta bolsa');
+check(E('estOut').innerHTML.indexOf('puesto/s por delante') !== -1, 'estimacion recalculada al abrir desde la ficha');
+
+const r0 = DATA.contratos.find(r => String(new Date(Date.UTC(1970, 0, 1) + r[4] * 86400000).toISOString().slice(0, 7)) === '2026-10');
+const csMes = P.contratosDe(r0[0], '2026-10');
+check(csMes.length >= 1 && csMes.every(c => c[4] != null), 'fechas de contrato de inicio y fin accesibles (' + csMes.length + ' contratos del contratado del mes)');
+
 console.log(fallos ? ('\n' + fallos + ' pruebas fallidas') : '\nTodo correcto');
 process.exit(fallos ? 1 : 0);
