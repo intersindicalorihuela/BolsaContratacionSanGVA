@@ -49,6 +49,12 @@ check(E('loginError').textContent !== '', 'rechaza código incorrecto');
 E('loginCodigo').value = 'IntersindicalSalut';
 E('loginForm').listeners.submit({ preventDefault(){} });
 check(E('appRoot').style.display === 'block', 'acepta código compartido y arranca init');
+E('loginCodigo').type = 'password';
+E('verCodigo').listeners.click();
+check(E('loginCodigo').type === 'text' && E('verCodigo').textContent === 'Ocultar', 'botón para ver el código de acceso');
+E('verCodigo').listeners.click();
+check(E('loginCodigo').type === 'password' && E('verCodigo').textContent === 'Mostrar', 'vuelve a ocultar el código');
+check(E('viewBuscar').style.display === 'block' && E('viewResumen').style.display === 'none', 'pestaña principal tras acceder: Por nombre');
 
 const P = global.window.__PANEL__;
 const DATA = P.DATA;
