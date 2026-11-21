@@ -107,8 +107,10 @@
   .tag{font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:600;border-radius:20px;padding:.12rem .5rem;border:1px solid var(--line);background:#FBF7F1;color:var(--ink-soft)}
   .tag.corto{background:var(--gold-tint);color:var(--gold);border-color:#E7D9AC}
   .tag.largo{background:var(--green-tint);color:var(--green);border-color:#CBDECF}
-  .buckchk{display:inline-flex;align-items:center;gap:.3rem;margin:0 .7rem .3rem 0;font-size:.78rem;cursor:pointer;user-select:none}
-  .buckchk input{width:auto;margin:0}
+  .buckchk{display:flex;align-items:flex-start;gap:.3rem;font-size:.78rem;font-weight:600;cursor:pointer;user-select:none;margin:0 0 .25rem}
+  .buckchk input{width:auto;margin:.12rem 0 0}
+  .bucksit{margin:-.1rem 0 .5rem 1.45rem;font-size:.72rem;color:var(--ink-soft);line-height:1.45;
+           font-weight:400;overflow-wrap:anywhere}
   footer{max-width:1080px;margin:2.5rem auto 0;padding:1rem 1rem 2.5rem;border-top:1px solid var(--line);font-size:.74rem;color:var(--ink-soft)}
   @media (max-width:640px){ .brand h1{font-size:1.35rem} .brand img.logo{width:46px;height:46px} .brand-desc{font-size:.8rem} .tab{padding:.4rem .6rem} .stamp{font-size:.74rem} }
 </style>
@@ -494,10 +496,12 @@ function renderGrupo(gi){
 }
 function renderBuckets(gi){
   const g = GRUPOS[gi];
+  const bs = DATA.bucketSit || {};
   const order = BORDEN.filter(b => g.cnt[b]);
   $('kBuckets').innerHTML = order.map(b =>
     '<label class="buckchk"><input type="checkbox" class="bucketChk" data-b="' + b + '"' + (BSEL.has(b) ? ' checked' : '') + '> '
     + ncell(DATA.bucketLbl[b]) + ' <span class="mini">(' + g.cnt[b] + ')</span></label>'
+    + (bs[b] && bs[b].length > 1 ? '<div class="mini bucksit">incluye: ' + bs[b].map(x => ncell(x)).join(' \u00b7 ') + '</div>' : '')
   ).join('');
   $('kBuckets').querySelectorAll('.bucketChk').forEach(ch => {
     ch.addEventListener('change', () => {

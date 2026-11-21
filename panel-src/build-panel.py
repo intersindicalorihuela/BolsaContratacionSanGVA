@@ -99,6 +99,8 @@ CAT_LABELS = {
 
 def bucket(situ):
     s = (situ or "").upper()
+    if s == "ACTIVA":
+        return "A"
     if s.startswith("DISPONIBLE"):
         return "D"
     if s.startswith("ACTIVO (NO VACANTE)"):
@@ -115,9 +117,25 @@ def bucket(situ):
         return "N"
     return "O"
 
-BUCKET_LBL = {"D": "DISPONIBLE", "E": "ACTIVO (DISP. ESPECIAL)", "U": "NO VACANTE (DISP. ESPECIAL)",
-              "A": "ACTIVO", "V": "EN PLAZA VACANTE", "W": "ACTIVO (NO VACANTE)",
-              "B": "BLOQUEADO", "R": "RESERVADO", "N": "NO DISPONIBLE", "O": "OTRA SITUACIÓN"}
+BUCKET_LBL = {"D": "DISPONIBLE", "E": "ACTIVO (DISPONIBLE ESPECIAL)",
+              "U": "ACTIVO (No vacante) (DISPONIBLE ESPECIAL)",
+              "A": "ACTIVO", "V": "ACTIVO EN PLAZA VACANTE", "W": "ACTIVO (No vacante)",
+              "B": "BLOQUEADO", "R": "RESERVADO", "N": "NO DISPONIBLE / DESACTIVADO", "O": "OTRA SITUACIÓN"}
+
+BUCKET_SITU = {
+    "D": ["DISPONIBLE"],
+    "E": ["ACTIVO (DISPONIBLE ESPECIAL)"],
+    "U": ["ACTIVO (No vacante) (DISPONIBLE ESPECIAL)"],
+    "A": ["ACTIVO", "ACTIVA"],
+    "V": ["ACTIVO EN PLAZA VACANTE", "ACTIVO EN PLAZA VACANTE (DISP. VACANTES +5 AÑOS)"],
+    "W": ["ACTIVO (No vacante)"],
+    "B": ["BLOQUEADO", "BLOQUEADO (DISPONIBLE ESPECIAL)"],
+    "R": ["RESERVADO", "RESERVADO (DISPONIBLE ESPECIAL)"],
+    "N": ["DESACTIVADO", "DESACTIVADO (NO LOCALIZABLE)", "DESACTIVADO/A DE OFICIO",
+          "NO DISPONIBLE OTROS", "NO DISPONIBLE POR PENALIZACIÓN", "NO DISPONIBLE PROVISIONAL",
+          "NO DISPONIBLE RENUNCIA JUSTIFICADA", "NO DISPONIBLE RENUNCIA VOLUNTARIA", "NO LOCALIZABLE"],
+    "O": ["Cualquier otra situación no incluida arriba"],
+}
 
 BUCKET_ORDEN = ["D", "E", "U", "A", "V", "W", "B", "R", "N", "O"]
 BUCKET_LLAMABLE = {"A", "D", "E", "U"}
@@ -187,6 +205,7 @@ def main():
         "corte": dcorte.isoformat(),
         "dpts": DPTS,
         "bucketLbl": BUCKET_LBL,
+        "bucketSit": BUCKET_SITU,
         "names": names,
         "grupos": grupos,
         "contratos": [[nidx[nnorm(r[0])], r[1], DPTS.index(contra["dptos"][r[3]]),

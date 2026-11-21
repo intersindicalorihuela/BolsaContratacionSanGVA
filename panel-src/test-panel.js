@@ -102,6 +102,16 @@ const totT = Object.values(t).reduce((a, b) => a + b, 0);
 const idxPrimera = g.filas.findIndex(f => f[0] >= v);
 check(totT === (idxPrimera < 0 ? g.filas.length : idxPrimera), 'delantePorSitu suma = nº de filas con puesto anterior (' + totT + ')');
 
+// textos completos de situaciones (identicos a los de la bolsa)
+check(DATA.bucketLbl.U === 'ACTIVO (No vacante) (DISPONIBLE ESPECIAL)', 'texto completo: U = ' + DATA.bucketLbl.U);
+check(DATA.bucketLbl.E === 'ACTIVO (DISPONIBLE ESPECIAL)' && DATA.bucketLbl.V === 'ACTIVO EN PLAZA VACANTE', 'textos completos: E y V');
+const bsN = (DATA.bucketSit || {}).N || [];
+check(bsN.indexOf('NO DISPONIBLE RENUNCIA JUSTIFICADA') !== -1 && bsN.indexOf('DESACTIVADO (NO LOCALIZABLE)') !== -1,
+      'casilla N lista todas sus situaciones de bolsa (' + bsN.length + ')');
+const gBi = DATA.grupos.findIndex(x => (x.cnt.B || 0) > 0);
+P.renderGrupo(gBi);
+check(E('kBuckets').innerHTML.indexOf('incluye:') !== -1, 'detalle bajo la casilla con las situaciones agrupadas');
+
 // buckets: las 4 situaciones llamables activas por defecto
 ['A', 'D', 'E', 'U'].forEach(b => check(P.buckets.has(b), 'bucket por defecto activo: ' + b));
 E('fPuesto').oninput();

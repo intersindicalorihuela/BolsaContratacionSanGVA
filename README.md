@@ -30,8 +30,9 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
   ese filtro. La columna **Llamables** de la tabla de bolsas es dinámica: suma
   exactamente las situaciones marcadas en las casillas.
 
-  Situaciones con identidad propia (lo más relevante para saber a quién pueden
-  llamar ya):
+  Situaciones con identidad propia, con el mismo texto completo que en la app de
+  bolsa (las que agrupan más de una situación exacta lo indican debajo de la
+  casilla):
 
   | Casilla | Situación en bolsa | Significado |
   |---|---|---|
@@ -41,9 +42,9 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
   | **A** | ACTIVO | Activo a secas (muy poco frecuente). |
   | V | ACTIVO EN PLAZA VACANTE | Colocada en una plaza vacante; puede dejarla si llaman por otra. |
   | W | ACTIVO (No vacante) | Ya colocada en plaza no vacante. |
-  | B | BLOQUEADO | | 
-  | R | RESERVADO | |
-  | N | DESACTIVADO / NO DISPONIBLE / NO LOCALIZABLE | |
+  | B | BLOQUEADO (también BLOQUEADO (DISPONIBLE ESPECIAL)) | |
+  | R | RESERVADO (también RESERVADO (DISPONIBLE ESPECIAL)) | |
+  | N | NO DISPONIBLE / DESACTIVADO: DESACTIVADO, DESACTIVADO (NO LOCALIZABLE), DESACTIVADO/A DE OFICIO, NO DISPONIBLE OTROS, NO DISPONIBLE POR PENALIZACIÓN, NO DISPONIBLE PROVISIONAL, NO DISPONIBLE RENUNCIA JUSTIFICADA, NO LOCALIZABLE | |
   | O | Otra situación no contemplada arriba | |
 - **Por nombre**: buscador sobre las dos fuentes a la vez — situación actual en cada
   bolsa donde consta la persona, su **última llamada** y todos sus contratos con sus
