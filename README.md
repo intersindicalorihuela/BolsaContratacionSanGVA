@@ -46,9 +46,17 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
   | N | DESACTIVADO / NO DISPONIBLE / NO LOCALIZABLE | |
   | O | Otra situación no contemplada arriba | |
 - **Por nombre**: buscador sobre las dos fuentes a la vez — situación actual en cada
-  bolsa donde consta la persona, su **última llamada** y todos sus contratos (fechas,
-  departamento, tipo de nombramiento, breve, jornada y duración corto/indeterminado
-  con la misma regla de 5 días de la app de Contrataciones).
+  bolsa donde consta la persona, su **última llamada** y todos sus contratos con sus
+  **fechas de inicio y fin** bien visibles y duración en días (departamento, tipo de
+  nombramiento, breve, jornada y regla de 5 días de la app de Contrataciones).
+- **Puestos pinchables**: en la ficha de una persona (y en los resultados del
+  buscador), al pinchar sobre el **número de puesto** de una categoría y departamento
+  se salta al Resumen con esa bolsa cargada y el puesto escrito en "Tu puesto en esta
+  bolsa" (estimación lista).
+- **Cabecera con la imagen del sindicato**: barra roja con la sesión y los filtros, y
+  logo, título y recuadro "Datos actualizados a: ..." con los PNG del repositorio. Al
+  compartir el enlace (p. ej. WhatsApp) la previsualización muestra el logo
+  (og:image).
 
 Mismo código de acceso que las otras apps (pídelo a tu delegado/a sindical).
 
