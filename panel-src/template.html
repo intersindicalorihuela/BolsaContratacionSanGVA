@@ -56,9 +56,11 @@
   tr.grprow{cursor:pointer}
   tr.grprow:hover td,tr.grprow.sel td{background:var(--red-tint)}
   .chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:600;padding:.1rem .45rem;border-radius:20px;border:1px solid var(--line)}
-  .chip.A{background:var(--green-tint);color:var(--green);border-color:#CBDECF}
-  .chip.V{background:var(--gold-tint);color:var(--gold);border-color:#E7D9AC}
+  .chip.A,.chip.D{background:var(--green-tint);color:var(--green);border-color:#CBDECF}
+  .chip.V,.chip.E,.chip.U{background:var(--gold-tint);color:var(--gold);border-color:#E7D9AC}
+  .chip.W{background:#E8EDF5;color:#44607B;border-color:#CBD5E5}
   .chip.B{background:var(--red-tint);color:var(--red-deep);border-color:var(--red-tint-border)}
+  .chip.R{background:#EFE9F5;color:#6B4B93;border-color:#DCD0EA}
   .chip.nan{color:var(--ink-soft)}
   .panel{display:none;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:1.1rem 1.2rem;margin-top:1.2rem}
   .panel.open{display:block}
@@ -147,7 +149,7 @@
           <thead><tr>
             <th>Categoría</th><th>Dpto</th><th>Bolsa</th>
             <th style="text-align:right">Candidatos</th>
-            <th style="text-align:right">Activos</th>
+            <th style="text-align:right" title="Candidatos en las situaciones marcadas en el detalle de la bolsa">Llamables</th>
             <th style="text-align:right">Contratos</th>
             <th style="text-align:right">Llamadas</th>
             <th>Último puesto llamado</th><th></th>
@@ -277,7 +279,8 @@ const MESES_LIST = (() => { const s = new Set(); DATA.contratos.forEach(r => s.a
 
 /* ---------- estado ---------- */
 let TAB = 'resumen', MES = MESES_LIST[MESES_LIST.length - 1], DUR = '', GSEL = null;
-const BSEL = new Set(['A']);
+const BORDEN = DATA.bOrden || ['D', 'E', 'U', 'A', 'V', 'W', 'B', 'R', 'N', 'O'];
+const BSEL = new Set(['A', 'D', 'E', 'U']);
 const DUR_LBL = { C: 'cortos', L: 'no cortos', X: 'indeterminados', V: 'vacantes' };
 function setTab(t){
   TAB = t;
@@ -410,7 +413,7 @@ function renderTabla(){
     tr.innerHTML = '<td>' + ncell(g.cat) + '</td><td>' + ncell(g.dpto) + '</td>'
       + '<td>' + (g.pi ? '<span class="chip">Pi</span>' : '<span class="chip nan">Ord</span>') + '</td>'
       + '<td style="text-align:right">' + g.filas.length + '</td>'
-      + '<td style="text-align:right" title="' + ncell(crit) + '">' + (g.cnt.A || 0) + '</td>'
+      + '<td style="text-align:right" title="' + ncell(crit) + '">' + BORDEN.reduce((s, b) => s + (BSEL.has(b) ? (g.cnt[b] || 0) : 0), 0) + '</td>'
       + '<td style="text-align:right">' + (nC || '<span class="muted">0</span>') + '</td>'
       + '<td style="text-align:right">' + (llamPos.size || '<span class="muted">0</span>') + '</td>'
       + '<td>' + (maxL != null ? '<span class="pill">' + maxL + '</span>' : '<span class="muted">—</span>') + '</td>'
@@ -456,7 +459,7 @@ function renderGrupo(gi){
 }
 function renderBuckets(gi){
   const g = GRUPOS[gi];
-  const order = ['A', 'V', 'B', 'R', 'N', 'O'].filter(b => g.cnt[b]);
+  const order = BORDEN.filter(b => g.cnt[b]);
   $('kBuckets').innerHTML = order.map(b =>
     '<label class="buckchk"><input type="checkbox" class="bucketChk" data-b="' + b + '"' + (BSEL.has(b) ? ' checked' : '') + '> '
     + ncell(DATA.bucketLbl[b]) + ' <span class="mini">(' + g.cnt[b] + ')</span></label>'
@@ -467,7 +470,7 @@ function renderBuckets(gi){
       if (!BSEL.size) BSEL.add('A');
       renderEstim(gi);
       renderLlamados(gi);
-      if (GSEL != null) renderTabla();
+      renderTabla();
     });
   });
 }
@@ -497,7 +500,7 @@ function renderEstim(gi){
   const prev = MESES_LIST.slice(Math.max(0, msIdx - 6), msIdx < 0 ? MESES_LIST.length : msIdx);
   const media = prev.length ? prev.reduce((a, m) => a + ((lm.get(m) || new Set()).size), 0) / prev.length : 0;
   const est = media > 0 ? Math.ceil(delante / media) : null;
-  const desglose = ['A', 'V', 'B', 'R', 'N', 'O'].filter(b => t[b]).map(b =>
+  const desglose = BORDEN.filter(b => t[b]).map(b =>
     '<span class="tag' + (BSEL.has(b) ? ' largo' : '') + '">' + ncell(DATA.bucketLbl[b]) + ': ' + t[b] + '</span>'
   ).join(' ');
   const llamado = llamadosDe(gi, MES, DUR).has(v);
@@ -521,7 +524,7 @@ function renderLlamados(gi){
   for (const f of g.filas){
     if (BSEL.has(f[2]) && !llamPos.has(f[0])){ siguiente = f[0]; break; }
   }
-  const queSit = BSEL.size === 1 && BSEL.has('A') ? 'activo' : 'en las situaciones marcadas';
+  const queSit = BSEL.size === 1 ? ncell(DATA.bucketLbl[[...BSEL][0]]).toLowerCase() : 'en las situaciones marcadas';
   $('gLlamInfo').textContent = llamPos.size
     ? 'En ' + mesTxt(MES) + ' hubo ' + llamPos.size + ' personas de esta bolsa con contrato' + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '') + ' (por nombre).'
       + (siguiente != null ? ' El siguiente puesto ' + queSit + ' no llamado es el ' + siguiente + '.' : '')

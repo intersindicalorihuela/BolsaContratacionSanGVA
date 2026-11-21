@@ -59,8 +59,12 @@ check(/^\d{4}-\d{2}-\d{2}$/.test(DATA.corte) && /^\d{4}-\d{2}-\d{2}$/.test(DATA.
 
 const gi = DATA.grupos.findIndex(g => g.cat === 'TCAE' && !g.pi);
 const g = DATA.grupos[gi];
-check(g.filas.length > 3000 && (g.cnt.A || 0) > 100, 'TCAE·ELCHE: candidatos y activos');
-check(g.act.every((x, k) => k === 0 || x > g.act[k - 1]), 'lista de activos ordenada');
+check(g.filas.length > 3000 && (g.cnt.D || 0) > 900, 'TCAE·ELCHE: candidatos y DISPONIBLE (' + (g.cnt.D || 0) + ')');
+check((g.cnt.U || 0) > 100 && 'U' in g.cnt, 'TCAE·ELCHE: NO VACANTE (DISP. ESPECIAL) como bucket propio (' + (g.cnt.U || 0) + ')');
+check(g.act.every((x, k) => k === 0 || x > g.act[k - 1]), 'lista de llamables ordenada');
+const BORDEN = DATA.bOrden;
+check(BORDEN.indexOf('D') === 0 && BORDEN.indexOf('E') > -1 && BORDEN.indexOf('U') > -1,
+      'orden de situaciones con D/E/U prioritarios');
 
 // --- analisis: total, cortos, vacantes ---
 MES('2026-10');
@@ -98,11 +102,10 @@ const totT = Object.values(t).reduce((a, b) => a + b, 0);
 const idxPrimera = g.filas.findIndex(f => f[0] >= v);
 check(totT === (idxPrimera < 0 ? g.filas.length : idxPrimera), 'delantePorSitu suma = nº de filas con puesto anterior (' + totT + ')');
 
-// buckets: solo activos vs todos
-P.toggleBucket('A'); P.toggleBucket('A'); // asegurar A activa
-check(P.buckets.has('A'), 'bucket ACTIVO activo por defecto');
+// buckets: las 4 situaciones llamables activas por defecto
+['A', 'D', 'E', 'U'].forEach(b => check(P.buckets.has(b), 'bucket por defecto activo: ' + b));
 E('fPuesto').oninput();
-const conA = (E('estOut').innerHTML.match(/(\d+) puesto\/s por delante/) || [])[1];
+const conLlam = (E('estOut').innerHTML.match(/(\d+) puesto\/s por delante/) || [])[1];
 
 // --- puesto inexistente ---
 E('fPuesto').value = '999999';

@@ -24,10 +24,27 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
   muestran siempre el desglose completo del mes (cortos, más de 5 días, indeterminados
   y vacantes).
 - **"¿Cuánto queda?" por situación**: al consultar tu puesto se desglosan los
-  candidatos que tienes **por delante según su situación en bolsa** (ACTIVO, ACTIVO EN
-  PLAZA VACANTE, BLOQUEADO, RESERVADO, NO DISPONIBLE...), y con casillas eliges qué
-  situaciones cuentan para la estimación (por defecto solo ACTIVO). El "siguiente
-  puesto no llamado" también respeta ese filtro.
+  candidatos que tienes **por delante según su situación en bolsa**, y con casillas
+  eliges qué situaciones cuentan para la estimación (por defecto ACTIVO, DISPONIBLE
+  y las dos DISPONIBLE ESPECIAL). El "siguiente puesto no llamado" también respeta
+  ese filtro. La columna **Llamables** de la tabla de bolsas es dinámica: suma
+  exactamente las situaciones marcadas en las casillas.
+
+  Situaciones con identidad propia (lo más relevante para saber a quién pueden
+  llamar ya):
+
+  | Casilla | Situación en bolsa | Significado |
+  |---|---|---|
+  | **D** | DISPONIBLE | La masa llamable real: persona disponible esperando llamada. |
+  | **E** | ACTIVO (DISPONIBLE ESPECIAL) | Trabaja pero pide además disponibilidad especial. |
+  | **U** | ACTIVO (No vacante) (DISPONIBLE ESPECIAL) | Ya colocada (plaza no vacante) y además disponibilidad especial. |
+  | **A** | ACTIVO | Activo a secas (muy poco frecuente). |
+  | V | ACTIVO EN PLAZA VACANTE | Colocada en una plaza vacante; puede dejarla si llaman por otra. |
+  | W | ACTIVO (No vacante) | Ya colocada en plaza no vacante. |
+  | B | BLOQUEADO | | 
+  | R | RESERVADO | |
+  | N | DESACTIVADO / NO DISPONIBLE / NO LOCALIZABLE | |
+  | O | Otra situación no contemplada arriba | |
 - **Por nombre**: buscador sobre las dos fuentes a la vez — situación actual en cada
   bolsa donde consta la persona, su **última llamada** y todos sus contratos (fechas,
   departamento, tipo de nombramiento, breve, jornada y duración corto/indeterminado

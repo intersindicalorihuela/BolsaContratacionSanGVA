@@ -99,10 +99,14 @@ CAT_LABELS = {
 
 def bucket(situ):
     s = (situ or "").upper()
+    if s.startswith("DISPONIBLE"):
+        return "D"
+    if s.startswith("ACTIVO (NO VACANTE)"):
+        return "U" if "DISPONIBLE ESPECIAL" in s else "W"
     if s.startswith("ACTIVO EN PLAZA VACANTE"):
         return "V"
     if s.startswith("ACTIVO"):
-        return "A"
+        return "E" if "DISPONIBLE ESPECIAL" in s else "A"
     if s.startswith("BLOQUEADO"):
         return "B"
     if s.startswith("RESERVADO"):
@@ -111,8 +115,12 @@ def bucket(situ):
         return "N"
     return "O"
 
-BUCKET_LBL = {"A": "ACTIVO", "V": "EN PLAZA VACANTE", "B": "BLOQUEADO",
-              "R": "RESERVADO", "N": "NO DISPONIBLE", "O": "OTRA SITUACIÓN"}
+BUCKET_LBL = {"D": "DISPONIBLE", "E": "ACTIVO (DISP. ESPECIAL)", "U": "NO VACANTE (DISP. ESPECIAL)",
+              "A": "ACTIVO", "V": "EN PLAZA VACANTE", "W": "ACTIVO (NO VACANTE)",
+              "B": "BLOQUEADO", "R": "RESERVADO", "N": "NO DISPONIBLE", "O": "OTRA SITUACIÓN"}
+
+BUCKET_ORDEN = ["D", "E", "U", "A", "V", "W", "B", "R", "N", "O"]
+BUCKET_LLAMABLE = {"A", "D", "E", "U"}
 
 # ---------- build ----------
 
@@ -167,13 +175,14 @@ def main():
             b = bucket(s)
             filas.append([int(row[0]), nidx[nnorm(row[1])], b, si])
             g["cnt"][b] = g["cnt"].get(b, 0) + 1
-            if b == "A":
+            if b in BUCKET_LLAMABLE:
                 g["act"].append(int(row[0]))
         g["filas"] = filas
 
     maxf = EPOCH + dt.timedelta(days=contra["maxfecha"])
     dcorte = EPOCH + dt.timedelta(days=contra["corte"])
     data = {
+        "bOrden": BUCKET_ORDEN,
         "fBolsa": bolsa.get("generated", ""),
         "corte": dcorte.isoformat(),
         "dpts": DPTS,
@@ -196,7 +205,7 @@ def main():
     with open(args.out, "w", encoding="utf-8") as f:
         f.write(html)
 
-    act_total = sum(g["cnt"].get("A", 0) for g in grupos)
+    act_total = sum(sum(g["cnt"].get(b, 0) for b in BUCKET_LLAMABLE) for g in grupos)
     print(f"OK: {len(grupos)} grupos de bolsa · {len(names)} nombres · {len(sel)} contratos en {'+'.join(DPTS)}")
     print(f"    activos: {act_total} · corte {data['corte']} · bolsa {data['fBolsa']}")
     import os
