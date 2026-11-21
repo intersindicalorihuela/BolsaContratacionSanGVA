@@ -1,0 +1,39 @@
+name: Actualizar panel
+
+on:
+  schedule:
+    - cron: '43 6 1,16 * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  construir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Descargar los últimos index de BolsaSanGVA y Contrataciones
+        run: |
+          curl -fsSL -H "Cache-Control: no-cache" -o /tmp/bolsa.html https://intersindicalorihuela.github.io/BolsaSanGVA/ || true
+          curl -fsSL -H "Cache-Control: no-cache" -o /tmp/contrataciones.html https://intersindicalorihuela.github.io/Contrataciones/ || true
+          test -s /tmp/bolsa.html || { echo "::error::No se pudo descargar el index de BolsaSanGVA"; exit 1; }
+          test -s /tmp/contrataciones.html || { echo "::error::No se pudo descargar el index de Contrataciones"; exit 1; }
+
+      - name: Generar panel/index.html
+        run: |
+          python3 panel-src/build-panel.py \
+            --bolsa /tmp/bolsa.html \
+            --contrataciones /tmp/contrataciones.html \
+            --tpl panel-src/template.html \
+            --out index.html
+          node panel-src/test-panel.js
+
+      - name: Guardar cambios
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add panel/index.html
+          git diff --staged --quiet || git commit -m "Actualiza panel ($(date +%F))"
+          git push

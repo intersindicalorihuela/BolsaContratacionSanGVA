@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Bolsa · Sanidad GVA · Intersindical Salut</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png" type="image/png">
+<meta name="theme-color" content="#BB2B09">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+  :root{
+    --ink:#1D1B1A; --ink-soft:#5C544F; --paper:#F6F2EC; --card:#FFFDF9;
+    --red:#BB2B09; --red-deep:#8A2007; --red-tint:#FBEAE4; --red-tint-border:#F0C4B6;
+    --green:#2F6B4F; --green-tint:#E7F0EB; --gold:#B98A00; --gold-tint:#F7EFD8;
+    --line:#E3D9CF; --line-soft:#ECE4DB;
+    --shadow:0 1px 2px rgba(29,27,26,.06),0 8px 24px rgba(29,27,26,.08);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;font-size:15px;-webkit-font-smoothing:antialiased}
+  .accent-b{color:var(--red)}
+  a{color:var(--red-deep)}
+  #loginOverlay{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:var(--paper);padding:16px}
+  .login-card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:28px 26px}
+  .login-card h1{font-family:'Source Serif 4',serif;font-size:1.45rem;margin:0 0 .2rem}
+  .login-desc{color:var(--ink-soft);font-size:.84rem;line-height:1.5;margin:.5rem 0 1.2rem}
+  .field{margin-bottom:.85rem}
+  .field label{display:block;font-size:.72rem;font-weight:600;color:var(--ink-soft);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.03em}
+  input[type=text],input[type=password],select{width:100%;font-family:'Inter',sans-serif;font-size:.92rem;padding:.55rem .65rem;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);outline:none}
+  input:focus,select:focus{border-color:var(--red)}
+  .btn{font-family:'Inter',sans-serif;font-size:.92rem;font-weight:600;cursor:pointer;background:var(--red);color:#fff;border:none;border-radius:8px;padding:.7rem 1.2rem}
+  .btn.secondary{background:#fff;color:var(--red-deep);border:1px solid var(--red)}
+  .err{display:none;background:var(--red-tint);border:1px solid var(--red-tint-border);color:var(--red-deep);border-radius:7px;padding:.55rem .75rem;font-size:.82rem;margin-bottom:.8rem}
+  .footnote{font-size:.74rem;color:var(--ink-soft);margin-top:1rem;line-height:1.5}
+  #appRoot{display:none}
+  header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+  .hwrap{max-width:1080px;margin:0 auto;padding:.7rem 1rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+  .hwrap h1{font-family:'Source Serif 4',serif;font-size:1.12rem;margin:0;flex:1 1 auto}
+  .stamp{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--ink-soft)}
+  .tabs{display:flex;gap:.25rem}
+  .tab{font-size:.85rem;font-weight:600;padding:.45rem .8rem;border-radius:8px;cursor:pointer;color:var(--ink-soft);background:transparent;border:1px solid transparent}
+  .tab.on{background:var(--red-tint);color:var(--red-deep);border-color:var(--red-tint-border)}
+  main{max-width:1080px;margin:0 auto;padding:1.2rem 1rem 4rem}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:.7rem;margin-bottom:1.1rem}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem .9rem;box-shadow:var(--shadow)}
+  .kpi .n{font-family:'Source Serif 4',serif;font-size:1.5rem;font-weight:700;line-height:1.1}
+  .kpi .l{font-size:.72rem;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-top:.15rem}
+  .filters{display:flex;gap:.6rem;flex-wrap:wrap;align-items:end;margin-bottom:.9rem}
+  .filters .field{margin:0;flex:1 1 170px;max-width:290px}
+  .twrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:.86rem;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+  th{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--line);background:#FBF7F1;white-space:nowrap}
+  td{padding:.55rem .7rem;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+  tr.grprow{cursor:pointer}
+  tr.grprow:hover td,tr.grprow.sel td{background:var(--red-tint)}
+  .chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:600;padding:.1rem .45rem;border-radius:20px;border:1px solid var(--line)}
+  .chip.A{background:var(--green-tint);color:var(--green);border-color:#CBDECF}
+  .chip.V{background:var(--gold-tint);color:var(--gold);border-color:#E7D9AC}
+  .chip.B{background:var(--red-tint);color:var(--red-deep);border-color:var(--red-tint-border)}
+  .chip.nan{color:var(--ink-soft)}
+  .panel{display:none;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:1.1rem 1.2rem;margin-top:1.2rem}
+  .panel.open{display:block}
+  .panel h2{font-family:'Source Serif 4',serif;font-size:1.1rem;margin:0 0 .2rem}
+  .panel .sub{font-size:.78rem;color:var(--ink-soft);margin-bottom:.8rem}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:.6rem}
+  .box{border:1px solid var(--line-soft);border-radius:9px;padding:.8rem .9rem;background:#FDFAF5}
+  .box h3{margin:0 0 .5rem;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft)}
+  .bars{display:flex;flex-direction:column;gap:.32rem}
+  .bar-row{display:grid;grid-template-columns:4.2rem 1fr 2.4rem;align-items:center;gap:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.72rem}
+  .bar{height:12px;background:var(--red);border-radius:3px;min-width:1px}
+  .bar.hoy{background:var(--red-deep)}
+  .pill{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:500;background:var(--red-tint);color:var(--red-deep);border:1px solid var(--red-tint-border);border-radius:16px;padding:.12rem .55rem;margin:.12rem .18rem .12rem 0}
+  details>summary{cursor:pointer;font-size:.82rem;font-weight:600;color:var(--red-deep)}
+  .big-est{font-family:'Source Serif 4',serif;font-size:1.7rem;font-weight:700;color:var(--red-deep)}
+  .muted{color:var(--ink-soft)}
+  .mini{font-size:.78rem;color:var(--ink-soft)}
+  .search-res{margin-top:.8rem}
+  .person-row{display:flex;flex-wrap:wrap;gap:.5rem .8rem;align-items:center;padding:.6rem .7rem;border:1px solid var(--line-soft);border-radius:8px;margin-bottom:.5rem;background:var(--card)}
+  .person-row.clickable{cursor:pointer}
+  .person-row.clickable:hover{border-color:var(--red)}
+  .person-row b{font-size:.92rem}
+  ul.contrats{list-style:none;margin:.4rem 0 0;padding:0}
+  ul.contrats li{display:flex;flex-wrap:wrap;gap:.4rem .8rem;align-items:baseline;padding:.5rem .2rem;border-bottom:1px solid var(--line-soft);font-size:.85rem}
+  ul.contrats li:last-child{border-bottom:none}
+  .tag{font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:600;border-radius:20px;padding:.12rem .5rem;border:1px solid var(--line);background:#FBF7F1;color:var(--ink-soft)}
+  .tag.corto{background:var(--gold-tint);color:var(--gold);border-color:#E7D9AC}
+  .tag.largo{background:var(--green-tint);color:var(--green);border-color:#CBDECF}
+  footer{max-width:1080px;margin:2.5rem auto 0;padding:1rem 1rem 2.5rem;border-top:1px solid var(--line);font-size:.74rem;color:var(--ink-soft)}
+  @media (max-width:640px){ .hwrap h1{font-size:1rem} .tab{padding:.4rem .6rem} }
+</style>
+</head>
+<body>
+
+<div id="loginOverlay">
+  <form class="login-card" id="loginForm">
+    <h1>Panel Bolsa <span class="accent-b">·</span> Sanidad GVA</h1>
+    <div class="login-desc">Acceso exclusivo para personas afiliadas a Intersindical Salut. Si no tienes código de acceso, solicítalo a tu delegado/a sindical.</div>
+    <div class="err" id="loginError"></div>
+    <div class="field"><label>Nombre</label><input type="text" id="loginNombre" autocomplete="off"></div>
+    <div class="field"><label>Código de acceso</label><input type="password" id="loginCodigo" autocomplete="off"></div>
+    <button class="btn" type="submit" style="width:100%">Entrar</button>
+    <div class="footnote">Combina tu situación en la bolsa de trabajo (actualización quincenal) con las contrataciones del último mes. Pide tu código a tu delegado/a sindical de Intersindical Salut.</div>
+  </form>
+</div>
+
+<div id="appRoot">
+  <header>
+    <div class="hwrap">
+      <h1>Panel Bolsa <span class="accent-b">·</span> Sanidad GVA</h1>
+      <span class="stamp" id="stamp"></span>
+      <select id="fMes" style="width:auto"></select>
+      <nav class="tabs">
+        <button class="tab on" id="tabResumen">Resumen</button>
+        <button class="tab" id="tabBuscar">Por nombre</button>
+      </nav>
+      <button class="btn secondary" id="logoutBtn" style="padding:.4rem .7rem;font-size:.75rem">Salir</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="viewResumen">
+      <div class="kpis" id="kpis"></div>
+      <div class="filters">
+        <div class="field"><label>Departamento</label><select id="fDpto"></select></div>
+        <div class="field"><label>Categoría</label><select id="fCat"></select></div>
+        <div class="field"><label>Bolsa</label>
+          <select id="fTipo">
+            <option value="">Ordinaria + Promoción interna</option>
+            <option value="o">Solo ordinarias</option>
+            <option value="pi">Solo promoción interna</option>
+          </select>
+        </div>
+      </div>
+      <div class="twrap">
+        <table>
+          <thead><tr>
+            <th>Categoría</th><th>Dpto</th><th>Bolsa</th>
+            <th style="text-align:right">Candidatos</th>
+            <th style="text-align:right">Activos</th>
+            <th style="text-align:right">Contratos</th>
+            <th style="text-align:right">Llamadas</th>
+            <th>Último puesto llamado</th><th></th>
+          </tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="panel" id="grpPanel">
+        <h2 id="gTitle"></h2>
+        <div class="sub" id="gSub"></div>
+        <div class="grid2">
+          <div class="box">
+            <h3>Personas de esta bolsa con contrato, por mes</h3>
+            <div class="bars" id="gBars"></div>
+            <p class="mini" style="margin-top:.6rem" id="gLlamInfo"></p>
+          </div>
+          <div class="box">
+            <h3>¿Cuánto queda?</h3>
+            <div class="field"><label>Tu puesto en esta bolsa</label>
+              <input type="text" id="fPuesto" inputmode="numeric" placeholder="nº de puesto" style="max-width:170px">
+            </div>
+            <div id="estOut" class="mini">Escribe tu nº de puesto.</div>
+            <div id="gLlamChips" style="margin-top:.7rem"></div>
+            <details style="margin-top:.6rem" id="dLlam">
+              <summary>Ver puestos llamados del mes seleccionado</summary>
+              <div style="margin-top:.5rem" id="gLlamList"></div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="viewBuscar" style="display:none">
+      <div class="filters">
+        <div class="field" style="max-width:430px"><label>Nombre y apellidos (o parte)</label>
+          <input type="text" id="fNombre" placeholder="p. ej. GARCIA LOPEZ MARIA" autocomplete="off">
+        </div>
+      </div>
+      <div class="search-res" id="searchRes"></div>
+      <div class="panel" id="personaPanel">
+        <h2 id="pTitle"></h2>
+        <div class="sub" id="pSub"></div>
+        <div class="box" style="margin-bottom:1rem">
+          <h3>Situación actual en la bolsa</h3>
+          <div id="pBolsa"></div>
+        </div>
+        <div class="box">
+          <h3>Contratos en el período de datos (Elche, Orihuela y Torrevieja)</h3>
+          <ul class="contrats" id="pContratos"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Herramienta de Intersindical Salut Orihuela para el personal de la sanidad pública valenciana.
+    Combina la situación en bolsa con el listado de contrataciones. Resultado NO oficial, uso orientativo.
+  </footer>
+</div>
+
+<script>
+const DATA = JSON.parse('{{DATA}}');
+const AUTH_KEY = 'intersindical_panel_auth', CODE = 'IntersindicalSalut';
+const $ = id => document.getElementById(id);
+const ESC = document.createElement('template');
+function ncell(s){ ESC.innerHTML = String(s == null ? '' : s); return ESC.innerHTML; }
+function nnorm(s){
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
+    .replace(/\u00aa/g, ' ')
+    .replace(/(^| )M( |$)/g, '$1MARIA$2')
+    .replace(/[^A-Z ]/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+}
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function mesTxt(m){ const p = m.split('-'); return MESES[+p[1] - 1] + ' ' + p[0]; }
+function toISO(d){ return new Date(Date.UTC(1970, 0, 1) + d * 86400000).toISOString().slice(0, 10); }
+function toMonth(d){ return toISO(d).slice(0, 7); }
+function dTxt(d){ if (d == null) return 'sin fin'; const p = toISO(d).split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+
+/* ---------- acceso ---------- */
+(function(){
+  function show(){ $('loginOverlay').style.display = 'none'; $('appRoot').style.display = 'block'; init(); }
+  $('loginForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const n = $('loginNombre').value.trim(), er = $('loginError');
+    if (!n){ er.textContent = 'Escribe tu nombre.'; er.style.display = 'block'; return; }
+    if ($('loginCodigo').value !== CODE){ er.textContent = 'Código de acceso incorrecto. Solicítalo a tu delegado/a sindical.'; er.style.display = 'block'; return; }
+    sessionStorage.setItem(AUTH_KEY, JSON.stringify({ nombre: n, ts: Date.now() }));
+    show();
+  });
+  $('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem(AUTH_KEY); location.reload(); });
+  let s = null; try { s = JSON.parse(sessionStorage.getItem(AUTH_KEY) || 'null'); } catch (e) {}
+  if (s && s.nombre) show();
+})();
+
+/* ---------- índices ---------- */
+const GRUPOS = DATA.grupos, NAMES = DATA.names;
+const nameIdx = (() => { let m = null; return () => (m || (m = new Map(NAMES.map((n, i) => [n, i])))); })();
+const groupIndex = (() => { let m = null; return () => (m || (m = new Map(GRUPOS.map((g, i) => [g.id, i])))); })();
+function filasPorNi(gi){
+  const g = GRUPOS[gi];
+  if (!g._byName){
+    g._byName = new Map();
+    g.filas.forEach(f => {
+      if (!g._byName.has(f[1])) g._byName.set(f[1], []);
+      g._byName.get(f[1]).push(f);
+    });
+  }
+  return g._byName;
+}
+const CCATN = DATA.ccats.map(c => nnorm(c).toLowerCase().replace(/[^a-z0-9]/g, ''));
+function grupoDeId(catn, pi, dpto){
+  const m = groupIndex();
+  if (pi){ const i = m.get(catn + '|1|' + dpto); if (i != null) return i; }
+  return m.get(catn + '|0|' + dpto);
+}
+
+/* ---------- estado ---------- */
+let TAB = 'resumen', MES = DATA.mesDef, GSEL = null;
+function setTab(t){
+  TAB = t;
+  $('tabResumen').classList.toggle('on', t === 'resumen');
+  $('tabBuscar').classList.toggle('on', t === 'buscar');
+  $('viewResumen').style.display = t === 'resumen' ? 'block' : 'none';
+  $('viewBuscar').style.display = t === 'buscar' ? 'block' : 'none';
+}
+$('tabResumen').addEventListener('click', () => setTab('resumen'));
+$('tabBuscar').addEventListener('click', () => setTab('buscar'));
+
+/* ---------- regla de contrato corto (misma que Contrataciones) ---------- */
+function esCorto(ini, fin){
+  if (fin != null) return (fin - ini + 1) <= 5;
+  const p = toISO(ini).split('-');
+  const ult = new Date(Date.UTC(+p[0], +p[1], 0));
+  if (toISO(ini) > DATA.corte) return null;
+  const dia = +p[2];
+  const corteP = DATA.corte.split('-');
+  const diasTrans = (Date.UTC(+corteP[0], +corteP[1] - 1, +corteP[2]) - Date.UTC(+p[0], +p[1] - 1, dia)) / 86400000;
+  return diasTrans > 5 ? false : null;
+}
+
+/* ---------- KPIs ---------- */
+function contratosDelMes(m){ return DATA.contratos.filter(c => toMonth(c[4]) === m); }
+function renderKpis(){
+  const rows = contratosDelMes(MES);
+  let cortos = 0, indet = 0;
+  rows.forEach(r => { const c = esCorto(r[4], r[5]); if (c === true) cortos++; else if (c === null) indet++; });
+  let llam = 0;
+  GRUPOS.forEach(g => { llam += (g.llam[MES] || []).length; });
+  const personas = new Set(rows.map(r => r[0])).size;
+  $('kpis').innerHTML = [
+    [rows.length, 'Contratos del mes'],
+    [personas, 'Personas contratadas'],
+    [cortos, 'Cortos (5 días o menos)'],
+    [indet, 'Indeterminados'],
+    [llam, 'Llamadas con bolsa activa']
+  ].map(k => '<div class="kpi"><div class="n">' + k[0] + '</div><div class="l">' + ncell(k[1]) + '</div></div>').join('');
+}
+
+/* ---------- tabla de grupos ---------- */
+function filtrarGrupos(){
+  const dpto = $('fDpto').value, cat = $('fCat').value, tipo = $('fTipo').value;
+  const list = [];
+  GRUPOS.forEach((g, i) => {
+    if (dpto && g.dpto !== dpto) return;
+    if (cat && g.cat !== cat) return;
+    if (tipo === 'pi' && !g.pi) return;
+    if (tipo === 'o' && g.pi) return;
+    list.push({ g, i });
+  });
+  list.sort((a, b) => a.g.cat.localeCompare(b.g.cat, 'es') || (a.g.pi - b.g.pi) || a.g.dpto.localeCompare(b.g.dpto, 'es'));
+  return list;
+}
+function renderTabla(){
+  const tb = $('tbody');
+  tb.innerHTML = '';
+  filtrarGrupos().forEach(({ g, i }) => {
+    const nC = g.meses[MES] || 0;
+    const llam = g.llam[MES] || [];
+    const maxL = llam.length ? llam.reduce((a, b) => Math.max(a, b)) : null;
+    const tr = document.createElement('tr');
+    tr.className = 'grprow' + (GSEL === i ? ' sel' : '');
+    tr.innerHTML = '<td>' + ncell(g.cat) + '</td><td>' + ncell(g.dpto) + '</td>'
+      + '<td>' + (g.pi ? '<span class="chip">Pi</span>' : '<span class="chip nan">Ord</span>') + '</td>'
+      + '<td style="text-align:right">' + g.filas.length + '</td>'
+      + '<td style="text-align:right">' + (g.cnt.A || 0) + '</td>'
+      + '<td style="text-align:right">' + (nC || '<span class="muted">0</span>') + '</td>'
+      + '<td style="text-align:right">' + (llam.length || '<span class="muted">0</span>') + '</td>'
+      + '<td>' + (maxL != null ? '<span class="pill">' + maxL + '</span>' : '<span class="muted">—</span>') + '</td>'
+      + '<td class="mini">ver ›</td>';
+    tr.addEventListener('click', () => {
+      GSEL = i;
+      renderTabla();
+      renderGrupo(i);
+      $('grpPanel').classList.add('open');
+      $('grpPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    tb.appendChild(tr);
+  });
+}
+function initFiltros(){
+  const dpts = [...new Set(GRUPOS.map(g => g.dpto))].sort();
+  $('fDpto').innerHTML = '<option value="">Todos</option>' + dpts.map(d => '<option>' + ncell(d) + '</option>').join('');
+  const cats = [...new Set(GRUPOS.map(g => g.cat))].sort((a, b) => a.localeCompare(b, 'es'));
+  $('fCat').innerHTML = '<option value="">Todas</option>' + cats.map(c => '<option>' + ncell(c) + '</option>').join('');
+  ['fDpto', 'fCat', 'fTipo'].forEach(id => $(id).addEventListener('change', renderTabla));
+}
+
+/* ---------- detalle de grupo ---------- */
+function renderGrupo(gi){
+  const g = GRUPOS[gi];
+  $('gTitle').textContent = g.cat + ' · ' + g.dpto + (g.pi ? ' · Promoción interna' : '');
+  $('gSub').textContent = 'Bolsa con datos del ' + DATA.fBolsa + ' · contratos hasta el ' + DATA.corte + ' · ' + g.filas.length + ' candidatos · ' + (g.cnt.A || 0) + ' activos';
+  const ms = Object.keys(DATA.totMes).sort();
+  const vals = ms.map(m => g.meses[m] || 0);
+  const max = Math.max(1, ...vals);
+  $('gBars').innerHTML = ms.map((m, i) =>
+    '<div class="bar-row"><span>' + m + '</span><div><div class="bar' + (m === MES ? ' hoy' : '') + '" style="width:' + Math.max(2, Math.round(100 * vals[i] / max)) + '%"></div></div><span>' + (vals[i] || '') + '</span></div>'
+  ).join('');
+  $('fPuesto').oninput = () => renderEstim(gi);
+  renderEstim(gi);
+  renderLlamados(gi);
+}
+function activosDelante(g, v){
+  let a = 0, b = g.act.length;
+  while (a < b){ const m = (a + b) >> 1; if (g.act[m] < v) a = m + 1; else b = m; }
+  return a;
+}
+function renderEstim(gi){
+  const g = GRUPOS[gi];
+  const v = parseInt($('fPuesto').value, 10);
+  const out = $('estOut');
+  if (isNaN(v)){ out.className = 'mini'; out.textContent = 'Escribe tu nº de puesto.'; return; }
+  out.className = '';
+  const enAct = g.act.includes(v);
+  if (!enAct){
+    out.innerHTML = '<span class="tag indent">—</span> <span class="mini">Ese puesto no figura como ACTIVO en esta bolsa (revisa el número, o el turno si es promoción interna).</span>';
+    return;
+  }
+  const delante = activosDelante(g, v);
+  const ms = Object.keys(DATA.totMes).sort();
+  const pos = ms.indexOf(MES);
+  const prev = (pos < 0 ? ms.slice(-6) : ms.slice(Math.max(0, pos - 6), pos)).map(m => (g.llam[m] || []).length);
+  const media = prev.length ? prev.reduce((a, x) => a + x, 0) / prev.length : 0;
+  const est = media > 0 ? Math.ceil(delante / media) : null;
+  const llamado = (g.llam[MES] || []).includes(v);
+  let txt = '<div class="big-est">' + (est != null ? est : '—') + '</div>'
+    + '<div class="mini">meses aproximadamente, si se mantiene el ritmo de los últimos 6 meses</div>'
+    + '<div class="mini" style="margin-top:.4rem">' + delante + ' activos por delante · media ' + media.toFixed(1) + ' llamadas/mes</div>';
+  if (llamado) txt += '<div style="margin-top:.5rem"><span class="tag corto">⬤ llamada en ' + mesTxt(MES) + '</span></div>';
+  out.innerHTML = txt;
+}
+function renderLlamados(gi){
+  const g = GRUPOS[gi];
+  const llam = g.llam[MES] || [];
+  const byP = new Map(g.filas.map(f => [f[0], f]));
+  const list = llam.map(p => {
+    const f = byP.get(p);
+    const s = f ? g.situ[f[3]] : '';
+    return '<span class="pill" title="' + ncell(s) + '">' + p + ' · ' + ncell(f ? NAMES[f[1]] : '?') + '</span>';
+  }).join('');
+  const L = new Set(llam);
+  let siguiente = null;
+  for (const p of g.act){ if (!L.has(p)){ siguiente = p; break; } }
+  $('gLlamInfo').textContent = llam.length
+    ? 'En ' + mesTxt(MES) + ' hubo ' + llam.length + ' personas de esta bolsa con contrato (por nombre).' + (siguiente != null ? ' El siguiente activo no llamado es el puesto ' + siguiente + '.' : '')
+    : 'En ' + mesTxt(MES) + ' no hubo contratos que recayeran en personas de esta bolsa (por nombre).';
+  $('gLlamChips').innerHTML = list ? '<h3 class="mini" style="margin:0 0 .3rem">Llamados en ' + mesTxt(MES) + '</h3>' + list : '';
+  $('gLlamList').innerHTML = list || '<span class="mini">—</span>';
+}
+
+/* ---------- buscador por nombre ---------- */
+function grupoChips(gi, filasList){
+  const g = GRUPOS[gi];
+  return filasList.map(f =>
+    '<span class="mini">' + ncell(g.cat) + ' · ' + ncell(g.dpto) + (g.pi ? ' Pi' : '') + ' · puesto <b>' + f[0] + '</b></span>'
+  ).join(' ');
+}
+function renderSearch(){
+  const q = nnorm($('fNombre').value);
+  const box = $('searchRes');
+  if (q.length < 3){ box.innerHTML = ''; return; }
+  const idx = nameIdx();
+  const hits = [];
+  for (const [n, i] of idx){
+    if (n.indexOf(q) !== -1){ hits.push(i); if (hits.length >= 40) break; }
+  }
+  hits.sort((a, b) => (NAMES[a].indexOf(q) === 0 ? 0 : 1) - (NAMES[b].indexOf(q) === 0 ? 0 : 1));
+  if (!hits.length){ box.innerHTML = '<div class="mini">Sin coincidencias.</div>'; return; }
+  box.innerHTML = hits.map(i => {
+    const chips = [];
+    GRUPOS.forEach((g, gi) => { const f = filasPorNi(gi).get(i); if (f) chips.push(grupoChips(gi, f)); });
+    return '<div class="person-row clickable" data-i="' + i + '"><b>' + ncell(NAMES[i]) + '</b>' + chips.join(' ') + '</div>';
+  }).join('');
+  box.querySelectorAll('.person-row').forEach(el => el.addEventListener('click', () => showPersona(+el.dataset.i)));
+}
+$('fNombre').addEventListener('input', renderSearch);
+
+function showPersona(ni){
+  $('pTitle').textContent = NAMES[ni];
+  $('personaPanel').classList.add('open');
+  $('pSub').textContent = 'Referencia: bolsa del ' + DATA.fBolsa + ' · contratos hasta el ' + DATA.corte;
+  const rows = [];
+  GRUPOS.forEach((g, gi) => {
+    (filasPorNi(gi).get(ni) || []).forEach(f => {
+      const llamada = (g.llam[MES] || []).includes(f[0]);
+      rows.push('<div class="person-row" style="cursor:default"><b>' + ncell(g.cat) + ' · ' + ncell(g.dpto) + (g.pi ? ' Pi' : '') + '</b>'
+        + '<span class="pill">puesto ' + f[0] + '</span>'
+        + '<span class="chip ' + f[2] + '">' + ncell(DATA.bucketLbl[f[2]] || '') + '</span>'
+        + '<span class="mini">' + ncell(g.situ[f[3]]) + '</span>'
+        + (llamada ? '<span class="tag corto">⬤ llamada en ' + mesTxt(MES) + '</span>' : '')
+        + '</div>');
+    });
+  });
+  $('pBolsa').innerHTML = rows.join('') || '<span class="mini">No consta en ninguna bolsa de ELCHE, ORIHUELA ni TORREVIEJA.</span>';
+  const cs = DATA.contratos.filter(c => c[0] === ni).sort((a, b) => b[4] - a[4]).slice(0, 60);
+  $('pContratos').innerHTML = cs.map(c => {
+    const corto = esCorto(c[4], c[5]);
+    const cls = corto === true ? 'corto' : (corto === false ? 'largo' : 'indent');
+    const lbl = corto === true ? 'corto' : (corto === false ? '' : 'indeterminado');
+    const perf = (c[10] != null && DATA.perfiles[c[10]]) ? ' · ' + ncell(DATA.perfiles[c[10]]) : '';
+    return '<li><b>' + dTxt(c[4]) + '</b> → ' + dTxt(c[5]) + ' <span class="tag ' + cls + '">' + lbl + '</span>'
+      + '<span class="mini">' + ncell(DATA.ccats[c[1]]) + ' · ' + ncell(DATA.dpts[c[2]]) + perf + '</span>'
+      + (c[3] != null ? '<span class="mini">puesto ' + c[3] + '</span>' : '')
+      + '<span class="tag">' + (c[6] === 'O' ? 'ordinario' : 'prom. interna') + '</span>'
+      + '<span class="tag">' + ncell(DATA.tnom[c[7]] || c[7]) + '</span>'
+      + (c[8] === 'S' ? '<span class="tag corto">breve</span>' : '')
+      + '<span class="tag">' + ({ A: 'jornada ATC', N: 'jornada ordinaria', P: 'jornada parcial' }[c[9]] || c[9]) + '</span>'
+      + '</li>';
+  }).join('') || '<li class="mini">Ningún contrato en el período de datos.</li>';
+  $('personaPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ---------- selector de mes y arranque ---------- */
+function initMes(){
+  const sel = $('fMes');
+  const ms = Object.keys(DATA.totMes).sort().reverse();
+  sel.innerHTML = ms.map(m => '<option value="' + m + '"' + (m === DATA.mesDef ? ' selected' : '') + '>' + mesTxt(m) + '</option>').join('');
+  sel.addEventListener('change', () => {
+    MES = sel.value;
+    renderKpis(); renderTabla();
+    if (GSEL != null) renderGrupo(GSEL);
+  });
+}
+function init(){
+  $('stamp').textContent = '▣ bolsa ' + DATA.fBolsa + ' · contratos ' + DATA.corte;
+  initMes(); initFiltros(); renderKpis(); renderTabla();
+  setTab('resumen');
+}
+window.__PANEL__ = { renderGrupo, showPersona, renderEstim, DATA, setMes: m => { MES = m; } };
+if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+</script>
+</body>
+</html>
