@@ -216,7 +216,6 @@ def main():
     maxf = EPOCH + dt.timedelta(days=contra["maxfecha"])
     dcorte = EPOCH + dt.timedelta(days=contra["corte"])
     data = {
-        "gen": dt.datetime.now().strftime("%Y-%m-%d %H:%M"),
         "fBolsa": bolsa.get("generated", ""),
         "corte": dcorte.isoformat(),
         "mesDef": maxf.strftime("%Y-%m"),
