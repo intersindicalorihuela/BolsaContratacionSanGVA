@@ -239,6 +239,10 @@
           <div class="box">
             <h3>¿Cuánto queda?</h3>
             <div id="kBuckets"></div>
+            <div class="field" id="kPf" style="display:none;margin-top:.6rem"><label>Perfil de enfermería</label>
+              <select id="pfSel" style="max-width:280px"></select>
+              <div class="mini" style="margin-top:.25rem">Cuenta solo personas con ese perfil anotado en la bolsa.</div>
+            </div>
             <div class="mini" style="margin-bottom:.6rem">Marca qué situaciones de bolsa cuentan como "por delante".</div>
             <div class="field"><label>Tu puesto en esta bolsa</label>
               <input type="text" id="fPuesto" inputmode="numeric" placeholder="nº de puesto" style="max-width:170px">
@@ -543,9 +547,55 @@ function renderGrupo(gi){
     return '<div class="bar-row"><span>' + m + '</span><div><div class="bar' + (m === MES ? ' hoy' : '') + '" style="width:' + Math.max(2, Math.round(100 * v / max)) + '%"></div></div><span>' + (v || '') + '</span></div>';
   }).join('');
   renderBuckets(gi);
+  renderPf(gi);
   $('fPuesto').oninput = () => renderEstim(gi);
   renderEstim(gi);
   renderLlamados(gi);
+}
+/* perfiles de enfermería (solo ENFERMERA/O los trae la bolsa) */
+function pfMapDe(g){
+  if (!g.pf) return null;
+  if (!g.__pf){
+    const m = new Map();
+    for (const [ni, ix] of g.pf) m.set(ni, new Set(ix));
+    g.__pf = m;
+  }
+  return g.__pf;
+}
+let pfActual = new Set(['']);
+function pfValor(){
+  const sel = $('pfSel');
+  return sel && pfActual.has(sel.value) ? sel.value : '';
+}
+function pfsDe(g, ni){
+  const m = pfMapDe(g);
+  const set = m ? m.get(ni) : null;
+  if (!set || !g.pfLista) return [];
+  return [...set].map(i => g.pfLista[i]);
+}
+function filaPasaPf(g, f, pf){
+  if (!pf) return true;
+  const set = (pfMapDe(g) || new Map()).get(f[1]);
+  if (pf === '__none') return !set || !set.size;
+  return !!set && set.has(+pf);
+}
+function pfEtiqueta(){
+  const pf = pfValor();
+  if (!pf) return '';
+  const g = GRUPOS[window.__GI__];
+  return pf === '__none' ? 'sin perfil' : (g.pfLista ? g.pfLista[+pf] : '');
+}
+function renderPf(gi){
+  const g = GRUPOS[gi];
+  const box = $('kPf'), sel = $('pfSel');
+  if (!g.pfLista){ pfActual = new Set(['']); sel.value = ''; box.style.display = 'none'; return; }
+  sel.innerHTML = '<option value="">Todos los perfiles</option>'
+    + '<option value="__none">Sin perfil</option>'
+    + g.pfLista.map((p, i) => '<option value="' + i + '">' + ncell(p) + '</option>').join('');
+  sel.value = '';
+  pfActual = new Set(['', '__none', ...g.pfLista.map((_, i) => String(i))]);
+  box.style.display = '';
+  sel.onchange = () => { renderEstim(gi); renderLlamados(gi); };
 }
 function renderBuckets(gi){
   const g = GRUPOS[gi];
@@ -571,11 +621,12 @@ function renderBuckets(gi){
     });
   });
 }
-/* puestos por delante (puesto < v), contados por bucket de situación */
-function delantePorSitu(g, v){
+/* puestos por delante (puesto < v), contados por bucket de situación (y perfil opcional) */
+function delantePorSitu(g, v, pf){
   const t = {};
   for (const f of g.filas){
     if (f[0] >= v) break;
+    if (!filaPasaPf(g, f, pf)) continue;
     t[f[2]] = (t[f[2]] || 0) + 1;
   }
   return t;
@@ -590,7 +641,7 @@ function renderEstim(gi){
     out.innerHTML = '<span class="tag indent">—</span> <span class="mini">Ese puesto no figura en esta bolsa (revisa el número, o el turno si es promoción interna).</span>';
     $('pTuNombre').textContent = ''; $('compartirBtn').style.display = 'none'; return;
   }
-  const t = delantePorSitu(g, v);
+  const t = delantePorSitu(g, v, pfValor());
   const delante = [...BSEL].reduce((a, b) => a + (t[b] || 0), 0);
   const lm = analisis(null, DUR).llam.get(gi) || new Map();
   const msIdx = MESES_LIST.indexOf(MES);
@@ -611,9 +662,10 @@ function renderEstim(gi){
     if (est <= 1){ grande = '≈ ' + dias; unidad = 'día' + (dias === 1 ? '' : 's'); }
     else { grande = '≈ ' + est; }
   }
+  const pfLbl = pfEtiqueta();
   let txt = '<div class="estwrap"><span class="big-est">' + grande + '</span>'
     + '<span class="mini">' + unidad + (delante > 0 && media > 0 && est > 1 ? ' aproximadamente' : '') + '</span>'
-    + '<span class="estside">' + delante + ' por delante</span></div>'
+    + '<span class="estside">' + delante + ' por delante' + (pfLbl ? ' · perfil: ' + ncell(pfLbl) : '') + '</span></div>'
     + '<div class="mini" style="margin-top:.4rem">candidatos con las situaciones marcadas y nº menor al tuyo · '
     + (DUR ? DUR_LBL[DUR] + ': ' : '') + 'media ' + media.toFixed(1) + ' llamadas/mes (últimos 6 meses)</div>'
     + (delante ? '<div style="margin-top:.5rem">' + desglose + '</div>' : '');
@@ -621,7 +673,7 @@ function renderEstim(gi){
   const fV = g.filas.find(f => f[0] === v);
   const tEst = delante === 0 ? '¡Tu turno ya!' : (media <= 0 ? '¿?' : (grande + ' ' + unidad).trim());
   LAST_EST = { nombre: NAMES[fV[1]], puesto: v, cat: g.cat + (g.pi ? ' · Promoción interna' : ''),
-               dpto: g.dpto, delante, tiempo: tEst };
+               dpto: g.dpto, delante, tiempo: tEst, perfil: pfLbl };
   $('pTuNombre').textContent = 'Nº ' + v + ' · ' + NAMES[fV[1]];
   $('compartirBtn').style.display = 'inline-block';
   out.innerHTML = txt;
@@ -639,14 +691,16 @@ function renderLlamados(gi){
       + (fechas ? ' <small>' + ncell(fechas) + '</small>' : '') + '</span>';
   }).join('');
   let siguiente = null;
+  const pfL = pfValor();
   for (const f of g.filas){
-    if (BSEL.has(f[2]) && !llamPos.has(f[0])){ siguiente = f[0]; break; }
+    if (BSEL.has(f[2]) && !llamPos.has(f[0]) && filaPasaPf(g, f, pfL)){ siguiente = f[0]; break; }
   }
   const queSit = BSEL.size === 1 ? ncell(DATA.bucketLbl[[...BSEL][0]]).toLowerCase() : 'en las situaciones marcadas';
   $('gLlamTitle').textContent = 'Llamados en ' + mesTxt(MES) + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '');
   $('gLlamInfo').textContent = llamPos.size
     ? 'En ' + mesTxt(MES) + ' hubo ' + llamPos.size + ' personas de esta bolsa con contrato' + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '') + ' (por nombre).'
-      + (siguiente != null ? ' El siguiente puesto ' + queSit + ' no llamado es el ' + siguiente + '.' : '')
+      + (siguiente != null ? ' El siguiente puesto ' + queSit + ' no llamado es el ' + siguiente
+        + (pfL ? ' (perfil: ' + ncell(pfEtiqueta()) + ')' : '') + '.' : '')
     : 'En ' + mesTxt(MES) + ' no hubo contratos' + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '') + ' que recayeran en personas de esta bolsa (por nombre).';
   $('gLlamChips').innerHTML = list || '<span class="mini">— Nadie de esta bolsa.</span>';
 }
@@ -698,6 +752,7 @@ function showPersona(ni){
         + ' title="Abrir esta bolsa en el Resumen con este puesto">puesto ' + f[0] + '</button>'
         + '<span class="chip ' + f[2] + '">' + ncell(DATA.bucketLbl[f[2]] || '') + '</span>'
         + '<span class="mini">' + ncell(g.situ[f[3]]) + '</span>'
+        + (pfsDe(g, ni).length ? '<span class="mini">perfil: ' + ncell(pfsDe(g, ni).join(', ')) + '</span>' : '')
         + (llamada ? '<span class="tag corto">⬤ llamada en ' + mesTxt(MES) + '</span>' : '')
         + (!llamada && ult ? '<span class="tag largo">últ. llamada: ' + mesTxt(ult) + '</span>' : '')
         + '</div>');
@@ -735,7 +790,7 @@ function txtConsulta(){
   return 'INTERSINDICAL SALUT Orihuela · BOLSA Sanidad GVA\n'
     + 'Consulta del ' + fechaTxt(new Date().toISOString().slice(0, 10)) + '\n\n'
     + 'Nombre: ' + e.nombre + '\n'
-    + 'Puesto: ' + e.puesto + ' · ' + e.cat + ' · ' + e.dpto + '\n'
+    + 'Puesto: ' + e.puesto + ' · ' + e.cat + ' · ' + e.dpto + (e.perfil ? ' · perfil ' + e.perfil : '') + '\n'
     + 'Candidatos por delante: ' + e.delante + '\n'
     + 'Tiempo estimado: ' + e.tiempo + '\n\n'
     + 'Bolsa de trabajo a ' + fechaTxt(DATA.fBolsa)
@@ -769,7 +824,7 @@ function tarjetaConsulta(){
   fila('Nombre', e.nombre);
   fila('Categoría', e.cat);
   fila('Departamento', e.dpto);
-  fila('Puesto', String(e.puesto));
+  fila('Puesto', String(e.puesto) + (e.perfil ? ' · ' + e.perfil : ''));
   ctx.fillStyle = '#FBEAE4'; ctx.fillRect(620, 108, 420, 420);
   ctx.fillStyle = '#8A2007';
   ctx.font = '600 22px Arial, sans-serif';

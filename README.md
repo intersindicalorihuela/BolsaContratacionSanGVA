@@ -27,7 +27,11 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
 - **"¿Cuánto queda?" por situación**: al consultar tu puesto se desglosan los
   candidatos que cumplen las situaciones marcadas y tienen **número menor al tuyo**
   (los que se seleccionarán antes para una oferta). El "siguiente puesto no llamado"
-  también respeta ese filtro.
+  también respeta ese filtro. En **ENFERMERA/O** aparece además un **filtro de perfil**
+  (Hemodinámica, Hemodiálisis, Intervencionismo, Área de pacientes críticos,
+  Área de quirófano, o sin perfil) que reduce el recuento a las personas con ese
+  perfil anotado en la bolsa; la ficha del candidato también muestra sus perfiles.
+  Los demás grupos no lo muestran porque la bolsa no recoge perfiles para ellos.
 
   Las casillas por defecto son **DISPONIBLE, ACTIVO (No vacante) (DISPONIBLE
   ESPECIAL) y ACTIVO (DISPONIBLE ESPECIAL)**; el resto de situaciones queda

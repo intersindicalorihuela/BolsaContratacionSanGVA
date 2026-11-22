@@ -187,6 +187,8 @@ def main():
             gidx[kstr] = gi
         g = grupos[gi]
         filas = []
+        pf_lista = [p for p in (c.get("perfiles") or []) if p and p != "Perfiles:"]
+        pf_map = {}
         for row in sorted(bolsa["candidates"][c["id"]], key=lambda x: x[0]):
             s = row[2] or ""
             si = g["situ"].index(s) if s in g["situ"] else (g["situ"].append(s) or len(g["situ"]) - 1)
@@ -195,7 +197,21 @@ def main():
             g["cnt"][b] = g["cnt"].get(b, 0) + 1
             if b in BUCKET_LLAMABLE:
                 g["act"].append(int(row[0]))
+            pf_raw = (row[5] if len(row) > 5 else "") or ""
+            if pf_raw and pf_raw.strip() != "Perfiles:":
+                pfs = [x.strip() for x in pf_raw.split("|")]
+                pfs = [x for x in pfs if x and x != "Perfiles:"]
+                if pfs:
+                    ni_ = filas[-1][1]
+                    pset = pf_map.setdefault(ni_, set())
+                    for p in pfs:
+                        if p not in pf_lista:
+                            pf_lista.append(p)
+                        pset.add(pf_lista.index(p))
         g["filas"] = filas
+        if pf_map:
+            g["pfLista"] = pf_lista
+            g["pf"] = [[ni, sorted(pf_map[ni])] for ni in sorted(pf_map)]
 
     maxf = EPOCH + dt.timedelta(days=contra["maxfecha"])
     dcorte = EPOCH + dt.timedelta(days=contra["corte"])

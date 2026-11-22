@@ -155,6 +155,42 @@ E('fPuesto').value = '999999';
 P.renderEstim(gi);
 check(E('estOut').innerHTML.indexOf('no figura') !== -1, 'puesto inexistente avisa');
 
+// --- perfil de enfermería ---
+const giEnf = DATA.grupos.findIndex(g => g.id === 'enfermerao|0|ELCHE');
+check(giEnf > -1, 'grupo ENFERMERA/O de ELCHE existe');
+const gEnf = DATA.grupos[giEnf];
+check(Array.isArray(gEnf.pfLista) && gEnf.pfLista.length === 5 && gEnf.pfLista.every(p => p && p !== 'Perfiles:'),
+  'pfLista de enfermería: 5 perfiles reales sin basura (' + (gEnf.pfLista || []).join(', ') + ')');
+check(Array.isArray(gEnf.pf) && gEnf.pf.length > 0
+  && gEnf.pf.every(par => par.length === 2 && par[1].length > 0 && par[1].every(i => i >= 0 && i < gEnf.pfLista.length)),
+  'pf: personas de bolsa con perfil (' + gEnf.pf.length + ')');
+check(DATA.grupos.filter(g => !('pf' in g)).length === DATA.grupos.length - 3,
+  'solo los 3 grupos de ENFERMERA/O traen perfiles');
+P.renderGrupo(giEnf);
+const optsPf = (E('pfSel').innerHTML.match(/<option/g) || []).length;
+check(E('kPf').style.display === '' && optsPf === 7, 'select de perfil visible con 7 opciones (' + optsPf + ')');
+const tTodo = P.delantePorSitu(gEnf, 3000, '');
+const tPf1 = P.delantePorSitu(gEnf, 3000, '1');
+const tot = t => Object.keys(t).reduce((a, b) => a + t[b], 0);
+check(tot(tPf1) > 0 && tot(tPf1) <= tot(tTodo), 'con perfil elegido, por delante > 0 y <= total (' + tot(tPf1) + '/' + tot(tTodo) + ')');
+const tSin = P.delantePorSitu(gEnf, 3000, '__none');
+check(tot(tSin) > 0 && tot(tSin) <= tot(tTodo), 'opción Sin perfil calculable (' + tot(tSin) + ')');
+const vEnf = gEnf.filas[3000][0];
+E('fPuesto').value = String(vEnf);
+E('pfSel').value = '1';
+E('pfSel').onchange();
+check(E('estOut').innerHTML.indexOf('perfil:') !== -1, 'estimación muestra el perfil elegido');
+const estPf = P.estado();
+const tPfSel = P.delantePorSitu(gEnf, vEnf, '1');
+const delBsel = ['D', 'E', 'U'].reduce((a, b) => a + (tPfSel[b] || 0), 0);
+check(estPf && estPf.puesto === vEnf && estPf.perfil === gEnf.pfLista[1] && estPf.delante === delBsel,
+  'consulta coherente con el perfil filtrado (' + estPf.delante + ', ' + estPf.perfil + ')');
+E('pfSel').value = '';
+P.renderEstim(giEnf);
+check(E('estOut').innerHTML.indexOf('perfil:') === -1, 'perfil Todos no anota perfil en la estimación');
+P.renderGrupo(gi);
+check(E('kPf').style.display === 'none', 'grupo sin perfiles (TCAE) oculta el select');
+
 // --- buscador ---
 E('fNombre').value = 'VERA CANOVAS';
 E('fNombre').listeners.input();
