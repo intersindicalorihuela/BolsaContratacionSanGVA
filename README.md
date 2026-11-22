@@ -14,9 +14,10 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
 
 - **Resumen**: tabla de todas las bolsas (categoría · departamento, ordinarias y Pi) con
   candidatos, activos, contratos del mes, llamadas del mes y último puesto llamado.
-- **Detalle de bolsa**: evolución mensual de llamadas, **estimación de espera**
-  (activos por delante ÷ llamadas medias de los últimos 6 meses), el siguiente activo
-  no llamado y el listado de puestos llamados con nombre y situación.
+- **Detalle de bolsa**: caja protagonista de **llamados del mes** (nombres, puestos y
+  fechas de contrato), **estimación de espera** con los candidatos por delante al lado
+  (en días cuando queda aproximadamente un mes o menos), el siguiente puesto no
+  llamado, y el gráfico por meses plegado en segundo plano.
 - **Filtro de contratos**: menú desplegable (cabecera) para ver en detalle solo los
   **cortos (5 días o menos)**, **no cortos (más de 5)**, **indeterminados** o
   **vacantes (interinidad)**. Afecta a la tabla de bolsas, a las barras mensuales,
@@ -24,15 +25,16 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
   muestran siempre el desglose completo del mes (cortos, más de 5 días, indeterminados
   y vacantes).
 - **"¿Cuánto queda?" por situación**: al consultar tu puesto se desglosan los
-  candidatos que tienes **por delante según su situación en bolsa**, y con casillas
-  eliges qué situaciones cuentan para la estimación (por defecto ACTIVO, DISPONIBLE
-  y las dos DISPONIBLE ESPECIAL). El "siguiente puesto no llamado" también respeta
-  ese filtro. La columna **Llamables** de la tabla de bolsas es dinámica: suma
-  exactamente las situaciones marcadas en las casillas.
+  candidatos que cumplen las situaciones marcadas y tienen **número menor al tuyo**
+  (los que se seleccionarán antes para una oferta). El "siguiente puesto no llamado"
+  también respeta ese filtro.
 
-  Situaciones con identidad propia, con el mismo texto completo que en la app de
-  bolsa (las que agrupan más de una situación exacta lo indican debajo de la
-  casilla):
+  Las casillas por defecto son **DISPONIBLE, ACTIVO (No vacante) (DISPONIBLE
+  ESPECIAL) y ACTIVO (DISPONIBLE ESPECIAL)**; el resto de situaciones queda
+  minimizado en un desplegable "Otras situaciones de bolsa" y solo se muestran si lo
+  despliegas. Situaciones con identidad propia, con el mismo texto completo que en
+  la app de bolsa (las que agrupan más de una situación exacta lo indican debajo de
+  la casilla):
 
   | Casilla | Situación en bolsa | Significado |
   |---|---|---|
