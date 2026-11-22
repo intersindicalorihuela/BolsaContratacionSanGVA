@@ -303,30 +303,41 @@ function toMonth(d){ return toISO(d).slice(0, 7); }
 function dTxt(d){ if (d == null) return 'sin fin'; const p = toISO(d).split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
 function fechaTxt(iso){ const p = String(iso).split('-'); return (+p[2]) + ' de ' + MESES[+p[1] - 1] + ' de ' + p[0]; }
 
+/* ---------- sesion recordada en el dispositivo ---------- */
+function guardarSesion(v){ try { localStorage.setItem(AUTH_KEY, JSON.stringify(v)); } catch (e) {} }
+function leerSesion(){
+  let v = null;
+  try { v = localStorage.getItem(AUTH_KEY) || sessionStorage.getItem(AUTH_KEY); } catch (e) {}
+  try { v = JSON.parse(v || 'null'); } catch (e) { v = null; }
+  return v && v.nombre ? v : null;
+}
+
 /* ---------- acceso ---------- */
+function show(v){
+  $('loginOverlay').style.display = 'none'; $('appRoot').style.display = 'block';
+  $('sesNombre').textContent = (v && v.nombre) || '';
+  init();
+}
 (function(){
-  function show(){
-    $('loginOverlay').style.display = 'none'; $('appRoot').style.display = 'block';
-    try { $('sesNombre').textContent = JSON.parse(sessionStorage.getItem(AUTH_KEY) || '{}').nombre || ''; } catch (e) {}
-    init();
-  }
   $('loginForm').addEventListener('submit', e => {
     e.preventDefault();
     const n = $('loginNombre').value.trim(), er = $('loginError');
     if (!n){ er.textContent = 'Escribe tu nombre.'; er.style.display = 'block'; return; }
     if ($('loginCodigo').value !== CODE){ er.textContent = 'Código de acceso incorrecto. Solicítalo a tu delegado/a sindical.'; er.style.display = 'block'; return; }
-    sessionStorage.setItem(AUTH_KEY, JSON.stringify({ nombre: n, ts: Date.now() }));
-    show();
+    guardarSesion({ nombre: n, ts: Date.now() });
+    show({ nombre: n });
   });
-  $('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem(AUTH_KEY); location.reload(); });
+  $('logoutBtn').addEventListener('click', () => {
+    try { localStorage.removeItem(AUTH_KEY); } catch (e) {}
+    try { sessionStorage.removeItem(AUTH_KEY); } catch (e) {}
+    location.reload();
+  });
   $('verCodigo').addEventListener('click', () => {
     const i = $('loginCodigo');
     const ver = i.type === 'password';
     i.type = ver ? 'text' : 'password';
     $('verCodigo').textContent = ver ? 'Ocultar' : 'Mostrar';
   });
-  let s = null; try { s = JSON.parse(sessionStorage.getItem(AUTH_KEY) || 'null'); } catch (e) {}
-  if (s && s.nombre) show();
 })();
 
 /* ---------- índices ---------- */
@@ -853,6 +864,9 @@ function contratosDe(ni, mes){
   }
   return (C_BY_N.get(ni) || []).filter(r => toMonth(r[4]) === mes);
 }
+
+const SESION_GUARDADA = leerSesion();
+if (SESION_GUARDADA) show(SESION_GUARDADA);
 
 window.__PANEL__ = {
   renderGrupo, showPersona, renderEstim, renderLlamados, renderKpis, renderTabla,

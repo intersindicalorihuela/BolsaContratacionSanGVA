@@ -34,6 +34,7 @@ const storage = {
   removeItem(k){ delete this.data[k]; }
 };
 global.window = {};
+global.location = { reload(){} };
 new Function('document','localStorage','sessionStorage','navigator','window', src)
   (doc, storage, storage, {}, global.window);
 const E = id => doc.getElementById(id);
@@ -185,6 +186,21 @@ check(E('estOut').innerHTML.indexOf('por delante') !== -1, 'estimacion recalcula
 const r0 = DATA.contratos.find(r => String(new Date(Date.UTC(1970, 0, 1) + r[4] * 86400000).toISOString().slice(0, 7)) === '2026-10');
 const csMes = P.contratosDe(r0[0], '2026-10');
 check(csMes.length >= 1 && csMes.every(c => c[4] != null), 'fechas de contrato de inicio y fin accesibles (' + csMes.length + ' contratos del contratado del mes)');
+
+// --- sesion recordada en el dispositivo ---
+check(storage.getItem('intersindical_panel_auth') !== null, 'sesion guardada en el dispositivo');
+E('logoutBtn').listeners.click();
+check(storage.getItem('intersindical_panel_auth') === null, 'Cambiar de usuario borra la sesion recordada');
+
+// nueva visita con sesion recordada: entra directo sin pedir el codigo
+(function(){
+  const els2 = {};
+  const doc2 = { getElementById: id => (els2[id] ||= fakeEl(id)), createElement: () => fakeEl('tmp'), querySelectorAll: () => [], addEventListener(){} };
+  const st2 = { data:{}, getItem(k){ return this.data[k] || null; }, setItem(k,v){ this.data[k] = v; }, removeItem(k){ delete this.data[k]; } };
+  st2.setItem('intersindical_panel_auth', JSON.stringify({ nombre: 'Juanma', ts: 1 }));
+  new Function('document','localStorage','sessionStorage','navigator','window', src)(doc2, st2, st2, {}, {});
+  check(els2['appRoot'].style.display === 'block' && els2['sesNombre'].textContent === 'Juanma', 'al volver entra directo con la sesion recordada');
+})();
 
 console.log(fallos ? ('\n' + fallos + ' pruebas fallidas') : '\nTodo correcto');
 process.exit(fallos ? 1 : 0);

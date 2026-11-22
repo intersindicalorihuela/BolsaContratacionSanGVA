@@ -68,6 +68,8 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
 
 Mismo código de acceso que las otras apps (pídelo a tu delegado/a sindical).
 
+La sesión se recuerda en el dispositivo: no hay que volver a teclear el código; "Cambiar de usuario" la borra.
+
 ## Estructura
 
 ```
