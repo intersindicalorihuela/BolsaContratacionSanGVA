@@ -99,7 +99,7 @@ E('fPuesto').value = String(g.act[0]);
 P.renderGrupo(gi);
 check(E('gSub').textContent.indexOf(DATA.fBolsa) !== -1, 'detalle de grupo con fecha de bolsa');
 check((E('kBuckets').innerHTML.match(/bucketChk/g) || []).length >= 1, 'casillas de situación renderizadas');
-check(E('estOut').innerHTML.indexOf('puesto/s por delante') !== -1, 'estimación con desglose por posición');
+check(E('estOut').innerHTML.indexOf('por delante') !== -1 && E('estOut').innerHTML.indexOf('estside') !== -1, 'estimación con candidatos por delante al lado');
 
 // desglose por situación: consistencia con el conteo por buckets
 const v = g.act[0];
@@ -117,11 +117,22 @@ check(bsN.indexOf('NO DISPONIBLE RENUNCIA JUSTIFICADA') !== -1 && bsN.indexOf('D
 const gBi = DATA.grupos.findIndex(x => (x.cnt.B || 0) > 0);
 P.renderGrupo(gBi);
 check(E('kBuckets').innerHTML.indexOf('incluye:') !== -1, 'detalle bajo la casilla con las situaciones agrupadas');
+check(E('kBuckets').innerHTML.indexOf('otrasSit') !== -1 && E('kBuckets').innerHTML.indexOf('principales') === -1, 'situaciones secundarias minimizadas en desplegable');
+P.renderGrupo(gi);
+const kHtml = E('kBuckets').innerHTML;
+check(kHtml.indexOf('Otras situaciones de bolsa') < kHtml.indexOf('bucketChk') + kHtml.length / 2 || kHtml.split('bucketChk').length - 1 >= 3, 'casillas principales D/E/U directamente visibles');
+
 
 // buckets: las 4 situaciones llamables activas por defecto
-['A', 'D', 'E', 'U'].forEach(b => check(P.buckets.has(b), 'bucket por defecto activo: ' + b));
+['D', 'E', 'U'].forEach(b => check(P.buckets.has(b), 'bucket por defecto activo: ' + b));
+check(!P.buckets.has('A') && !P.buckets.has('V'), 'situaciones no llamables excluidas por defecto');
 E('fPuesto').oninput();
-const conLlam = (E('estOut').innerHTML.match(/(\d+) puesto\/s por delante/) || [])[1];
+const conLlam = (E('estOut').innerHTML.match(/estside">(\d+) por delante/) || [])[1];
+
+// delante = 0: mensaje directo
+E('fPuesto').value = String(g.filas[0][0]);
+P.renderEstim(gi);
+check(E('estOut').innerHTML.indexOf('Tu turno ya') !== -1, 'sin nadie por delante: Tu turno ya');
 
 // --- puesto inexistente ---
 E('fPuesto').value = '999999';
@@ -154,7 +165,7 @@ check(E('pBolsa').innerHTML.indexOf('poslink') !== -1, 'ficha: numero de puesto 
 P.abrirGrupoEnResumen(gi, g.filas[0][0]);
 check(E('fDpto').value === g.dpto && E('fCat').value === g.cat, 'pinchar puesto filtra la bolsa concreta');
 check(E('fPuesto').value === String(g.filas[0][0]), 'puesto precargado en Tu puesto en esta bolsa');
-check(E('estOut').innerHTML.indexOf('puesto/s por delante') !== -1, 'estimacion recalculada al abrir desde la ficha');
+check(E('estOut').innerHTML.indexOf('por delante') !== -1, 'estimacion recalculada al abrir desde la ficha');
 
 const r0 = DATA.contratos.find(r => String(new Date(Date.UTC(1970, 0, 1) + r[4] * 86400000).toISOString().slice(0, 7)) === '2026-10');
 const csMes = P.contratosDe(r0[0], '2026-10');

@@ -86,6 +86,14 @@
   .panel h2{font-family:'Source Serif 4',serif;font-size:1.1rem;margin:0 0 .2rem}
   .panel .sub{font-size:.78rem;color:var(--ink-soft);margin-bottom:.8rem}
   .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:.6rem}
+  .grid2.contrapeso{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+  .llamchips{max-height:320px;overflow:auto;overflow-wrap:anywhere}
+  .barsdet{margin-top:.9rem}
+  .barsdet>summary{font-size:.8rem;font-weight:600;color:var(--ink-soft)}
+  .estwrap{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap}
+  .estside{font-family:'IBM Plex Mono',monospace;font-size:1rem;font-weight:600;color:var(--red-deep)}
+  details.otrasSit{margin-top:.5rem}
+  details.otrasSit>summary{font-size:.78rem;font-weight:600;color:var(--ink-soft)}
   .box{border:1px solid var(--line-soft);border-radius:9px;padding:.8rem .9rem;background:#FDFAF5}
   .box h3{margin:0 0 .5rem;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft)}
   .bars{display:flex;flex-direction:column;gap:.32rem}
@@ -190,7 +198,6 @@
           <thead><tr>
             <th>Categoría</th><th>Dpto</th><th>Bolsa</th>
             <th style="text-align:right">Candidatos</th>
-            <th style="text-align:right" title="Candidatos en las situaciones marcadas en el detalle de la bolsa">Llamables</th>
             <th style="text-align:right">Contratos</th>
             <th style="text-align:right">Llamadas</th>
             <th>Último puesto llamado</th><th></th>
@@ -202,11 +209,11 @@
       <div class="panel" id="grpPanel">
         <h2 id="gTitle"></h2>
         <div class="sub" id="gSub"></div>
-        <div class="grid2">
+        <div class="grid2 contrapeso">
           <div class="box">
-            <h3 id="lBars">Personas de esta bolsa con contrato, por mes</h3>
-            <div class="bars" id="gBars"></div>
-            <p class="mini" style="margin-top:.6rem" id="gLlamInfo"></p>
+            <h3 id="gLlamTitle">Llamados</h3>
+            <p class="mini" style="margin:.2rem 0 .5rem" id="gLlamInfo"></p>
+            <div class="llamchips" id="gLlamChips"></div>
           </div>
           <div class="box">
             <h3>¿Cuánto queda?</h3>
@@ -216,13 +223,12 @@
               <input type="text" id="fPuesto" inputmode="numeric" placeholder="nº de puesto" style="max-width:170px">
             </div>
             <div id="estOut" class="mini">Escribe tu nº de puesto.</div>
-            <div id="gLlamChips" style="margin-top:.7rem"></div>
-            <details style="margin-top:.6rem">
-              <summary>Ver puestos llamados del mes seleccionado</summary>
-              <div style="margin-top:.5rem" id="gLlamList"></div>
-            </details>
           </div>
         </div>
+        <details class="barsdet">
+          <summary id="lBars">Personas de esta bolsa con contrato, por mes</summary>
+          <div class="bars" id="gBars" style="margin-top:.5rem"></div>
+        </details>
       </div>
     </section>
 
@@ -332,7 +338,7 @@ const MESES_LIST = (() => { const s = new Set(); DATA.contratos.forEach(r => s.a
 /* ---------- estado ---------- */
 let TAB = 'resumen', MES = MESES_LIST[MESES_LIST.length - 1], DUR = '', GSEL = null;
 const BORDEN = DATA.bOrden || ['D', 'E', 'U', 'A', 'V', 'W', 'B', 'R', 'N', 'O'];
-const BSEL = new Set(['A', 'D', 'E', 'U']);
+const BSEL = new Set(['D', 'E', 'U']);
 const DUR_LBL = { C: 'cortos', L: 'no cortos', X: 'indeterminados', V: 'vacantes' };
 function setTab(t){
   TAB = t;
@@ -459,13 +465,11 @@ function renderTabla(){
     const nC = cAll[MES] || 0;
     const llamPos = llamadosDe(i, MES, DUR);
     const maxL = llamPos.size ? Math.max(...llamPos) : null;
-    const crit = Object.keys(g.cnt).map(b => DATA.bucketLbl[b] + ': ' + g.cnt[b]).join(' · ');
     const tr = document.createElement('tr');
     tr.className = 'grprow' + (GSEL === i ? ' sel' : '');
     tr.innerHTML = '<td>' + ncell(g.cat) + '</td><td>' + ncell(g.dpto) + '</td>'
       + '<td>' + (g.pi ? '<span class="chip">Pi</span>' : '<span class="chip nan">Ord</span>') + '</td>'
       + '<td style="text-align:right">' + g.filas.length + '</td>'
-      + '<td style="text-align:right" title="' + ncell(crit) + '">' + BORDEN.reduce((s, b) => s + (BSEL.has(b) ? (g.cnt[b] || 0) : 0), 0) + '</td>'
       + '<td style="text-align:right">' + (nC || '<span class="muted">0</span>') + '</td>'
       + '<td style="text-align:right">' + (llamPos.size || '<span class="muted">0</span>') + '</td>'
       + '<td>' + (maxL != null ? '<span class="pill">' + maxL + '</span>' : '<span class="muted">—</span>') + '</td>'
@@ -513,15 +517,20 @@ function renderBuckets(gi){
   const g = GRUPOS[gi];
   const bs = DATA.bucketSit || {};
   const order = BORDEN.filter(b => g.cnt[b]);
-  $('kBuckets').innerHTML = order.map(b =>
+  const chkHtml = b =>
     '<label class="buckchk"><input type="checkbox" class="bucketChk" data-b="' + b + '"' + (BSEL.has(b) ? ' checked' : '') + '> '
     + ncell(DATA.bucketLbl[b]) + ' <span class="mini">(' + g.cnt[b] + ')</span></label>'
-    + (bs[b] && bs[b].length > 1 ? '<div class="mini bucksit">incluye: ' + bs[b].map(x => ncell(x)).join(' \u00b7 ') + '</div>' : '')
-  ).join('');
+    + (bs[b] && bs[b].length > 1 ? '<div class="mini bucksit">incluye: ' + bs[b].map(x => ncell(x)).join(' \u00b7 ') + '</div>' : '');
+  const principales = order.filter(b => b === 'D' || b === 'E' || b === 'U');
+  const otras = order.filter(b => b !== 'D' && b !== 'E' && b !== 'U');
+  const totOtras = otras.reduce((a, b) => a + g.cnt[b], 0);
+  $('kBuckets').innerHTML = principales.map(chkHtml).join('')
+    + (otras.length ? '<details class="otrasSit"><summary>Otras situaciones de bolsa (' + totOtras + ') ›</summary>'
+      + '<div style="margin-top:.4rem">' + otras.map(chkHtml).join('') + '</div></details>' : '');
   $('kBuckets').querySelectorAll('.bucketChk').forEach(ch => {
     ch.addEventListener('change', () => {
       if (ch.checked) BSEL.add(ch.dataset.b); else BSEL.delete(ch.dataset.b);
-      if (!BSEL.size) BSEL.add('A');
+      if (!BSEL.size) BSEL.add('D');
       renderEstim(gi);
       renderLlamados(gi);
       renderTabla();
@@ -558,9 +567,21 @@ function renderEstim(gi){
     '<span class="tag' + (BSEL.has(b) ? ' largo' : '') + '">' + ncell(DATA.bucketLbl[b]) + ': ' + t[b] + '</span>'
   ).join(' ');
   const llamado = llamadosDe(gi, MES, DUR).has(v);
-  let txt = '<div class="big-est">' + (est != null ? est : '—') + '</div>'
-    + '<div class="mini">meses aproximadamente, si se mantiene el ritmo de los últimos 6 meses</div>'
-    + '<div class="mini" style="margin-top:.4rem">' + delante + ' puesto/s por delante · ' + (DUR ? DUR_LBL[DUR] + ': ' : '') + 'media ' + media.toFixed(1) + ' llamadas/mes</div>'
+  let grande, unidad = 'meses';
+  if (delante === 0){ grande = 'Tu turno ya'; }
+  else if (media <= 0){
+    grande = '—';
+    unidad = '¿?';
+  } else {
+    const dias = Math.max(1, Math.round(delante / media * 30.4));
+    if (est <= 1){ grande = '≈ ' + dias; unidad = 'día' + (dias === 1 ? '' : 's'); }
+    else { grande = '≈ ' + est; }
+  }
+  let txt = '<div class="estwrap"><span class="big-est">' + grande + '</span>'
+    + '<span class="mini">' + unidad + (delante > 0 && media > 0 && est > 1 ? ' aproximadamente' : '') + '</span>'
+    + '<span class="estside">' + delante + ' por delante</span></div>'
+    + '<div class="mini" style="margin-top:.4rem">candidatos con las situaciones marcadas y nº menor al tuyo · '
+    + (DUR ? DUR_LBL[DUR] + ': ' : '') + 'media ' + media.toFixed(1) + ' llamadas/mes (últimos 6 meses)</div>'
     + (delante ? '<div style="margin-top:.5rem">' + desglose + '</div>' : '');
   if (llamado) txt += '<div style="margin-top:.5rem"><span class="tag corto">⬤ llamada en ' + mesTxt(MES) + '</span></div>';
   out.innerHTML = txt;
@@ -582,12 +603,12 @@ function renderLlamados(gi){
     if (BSEL.has(f[2]) && !llamPos.has(f[0])){ siguiente = f[0]; break; }
   }
   const queSit = BSEL.size === 1 ? ncell(DATA.bucketLbl[[...BSEL][0]]).toLowerCase() : 'en las situaciones marcadas';
+  $('gLlamTitle').textContent = 'Llamados en ' + mesTxt(MES) + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '');
   $('gLlamInfo').textContent = llamPos.size
     ? 'En ' + mesTxt(MES) + ' hubo ' + llamPos.size + ' personas de esta bolsa con contrato' + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '') + ' (por nombre).'
       + (siguiente != null ? ' El siguiente puesto ' + queSit + ' no llamado es el ' + siguiente + '.' : '')
     : 'En ' + mesTxt(MES) + ' no hubo contratos' + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '') + ' que recayeran en personas de esta bolsa (por nombre).';
-  $('gLlamChips').innerHTML = list ? '<h3 class="mini" style="margin:0 0 .3rem">Llamados en ' + mesTxt(MES) + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '') + '</h3>' + list : '';
-  $('gLlamList').innerHTML = list || '<span class="mini">—</span>';
+  $('gLlamChips').innerHTML = list || '<span class="mini">— Nadie de esta bolsa.</span>';
 }
 
 /* ---------- buscador por nombre ---------- */
