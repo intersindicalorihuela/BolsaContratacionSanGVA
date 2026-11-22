@@ -129,6 +129,21 @@ check(!P.buckets.has('A') && !P.buckets.has('V'), 'situaciones no llamables excl
 E('fPuesto').oninput();
 const conLlam = (E('estOut').innerHTML.match(/estside">(\d+) por delante/) || [])[1];
 
+// datos de la consulta: nombre junto al puesto y boton compartir
+const dRows = g.filas.filter(f => f[2] === 'D');
+const vConsultado = (dRows.length > 1 ? dRows[1] : g.filas[g.filas.length - 1])[0];
+E('fPuesto').value = String(vConsultado);
+P.renderEstim(gi);
+const est = P.estado();
+check(est && est.puesto === vConsultado && est.delante > 0, 'consulta guardada con candidatos por delante (' + (est ? est.delante : '-') + ')');
+check(est && est.nombre.length > 0 && est.cat === g.cat && est.dpto === g.dpto, 'consulta con nombre, categoria y departamento');
+check(E('pTuNombre').textContent.indexOf('N\u00ba ' + vConsultado + ' ') === 0, 'nombre junto al puesto: ' + E('pTuNombre').textContent);
+check(E('compartirBtn').style.display === 'inline-block', 'boton Compartir consulta visible');
+const tCons = P.txtConsulta();
+check(tCons.indexOf('INTERSINDICAL SALUT Orihuela · BOLSA Sanidad GVA') === 0, 'texto de consulta con encabezado del sindicato');
+check(tCons.indexOf('Nombre: ' + est.nombre) !== -1 && tCons.indexOf('Candidatos por delante: ' + est.delante) !== -1
+      && tCons.indexOf('Tiempo estimado:') !== -1, 'texto con todos los datos para el afiliado');
+
 // delante = 0: mensaje directo
 E('fPuesto').value = String(g.filas[0][0]);
 P.renderEstim(gi);

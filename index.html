@@ -124,10 +124,31 @@
   .bucksit{margin:-.1rem 0 .5rem 1.45rem;font-size:.72rem;color:var(--ink-soft);line-height:1.45;
            font-weight:400;overflow-wrap:anywhere}
   footer{max-width:1080px;margin:2.5rem auto 0;padding:1rem 1rem 2.5rem;border-top:1px solid var(--line);font-size:.74rem;color:var(--ink-soft)}
+  .compartirBtn{margin-top:.8rem;background:var(--red);color:#fff;border:none;border-radius:8px;padding:.65rem 1.1rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;font-size:.9rem}
+  .compartirBtn:hover{background:var(--red-deep)}
+  #shareOverlay{position:fixed;inset:0;z-index:150;display:none;align-items:center;justify-content:center;background:rgba(29,27,26,.45);padding:16px}
+  .share-card{background:var(--card);border-radius:12px;max-width:560px;width:100%;padding:1.2rem;box-shadow:0 12px 40px rgba(0,0,0,.25);max-height:92vh;overflow:auto}
+  .share-card img{width:100%;border:1px solid var(--line);border-radius:8px;margin:.6rem 0}
+  .share-card textarea{width:100%;font-family:'IBM Plex Mono',monospace;font-size:.78rem;border:1px solid var(--line);border-radius:7px;padding:.6rem;resize:vertical;background:#fff;color:var(--ink)}
+  .share-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem}
   @media (max-width:640px){ .brand h1{font-size:1.35rem} .brand img.logo{width:46px;height:46px} .brand-desc{font-size:.8rem} .tab{padding:.4rem .6rem} .stamp{font-size:.74rem} }
 </style>
 </head>
 <body>
+
+<div id="shareOverlay">
+  <div class="share-card">
+    <h2 style="margin:0;font-family:'Source Serif 4',serif;font-size:1.15rem">Compartir consulta</h2>
+    <p class="mini" style="margin:.3rem 0 .2rem">Imagen lista para enviar por WhatsApp o donde quieras, y el texto por si lo prefieres pegar.</p>
+    <img id="shareImg" alt="Consulta de bolsa generada">
+    <textarea id="shareTxt" rows="7" readonly></textarea>
+    <div class="share-actions">
+      <button type="button" class="btn" id="shareCopy" style="padding:.5rem .9rem;font-size:.85rem">Copiar texto</button>
+      <a class="btn secondary" id="shareDl" download="consulta-bolsa-intersindical.png" style="padding:.5rem .9rem;font-size:.85rem;text-decoration:none">Descargar imagen</a>
+      <button type="button" class="btn secondary" id="shareClose" style="padding:.5rem .9rem;font-size:.85rem">Cerrar</button>
+    </div>
+  </div>
+</div>
 
 <div id="loginOverlay">
   <form class="login-card" id="loginForm">
@@ -221,8 +242,10 @@
             <div class="mini" style="margin-bottom:.6rem">Marca qué situaciones de bolsa cuentan como "por delante".</div>
             <div class="field"><label>Tu puesto en esta bolsa</label>
               <input type="text" id="fPuesto" inputmode="numeric" placeholder="nº de puesto" style="max-width:170px">
+              <div class="mini" id="pTuNombre" style="margin-top:.3rem;font-weight:600;color:var(--red-deep)"></div>
             </div>
             <div id="estOut" class="mini">Escribe tu nº de puesto.</div>
+            <button type="button" class="compartirBtn" id="compartirBtn" style="display:none">Compartir consulta ↗</button>
           </div>
         </div>
         <details class="barsdet">
@@ -550,11 +573,11 @@ function renderEstim(gi){
   const g = GRUPOS[gi];
   const v = parseInt($('fPuesto').value, 10);
   const out = $('estOut');
-  if (isNaN(v)){ out.className = 'mini'; out.textContent = 'Escribe tu nº de puesto.'; return; }
+  if (isNaN(v)){ out.className = 'mini'; out.textContent = 'Escribe tu nº de puesto.'; $('pTuNombre').textContent = ''; $('compartirBtn').style.display = 'none'; return; }
   out.className = '';
   if (!g.filas.some(f => f[0] === v)){
     out.innerHTML = '<span class="tag indent">—</span> <span class="mini">Ese puesto no figura en esta bolsa (revisa el número, o el turno si es promoción interna).</span>';
-    return;
+    $('pTuNombre').textContent = ''; $('compartirBtn').style.display = 'none'; return;
   }
   const t = delantePorSitu(g, v);
   const delante = [...BSEL].reduce((a, b) => a + (t[b] || 0), 0);
@@ -584,6 +607,12 @@ function renderEstim(gi){
     + (DUR ? DUR_LBL[DUR] + ': ' : '') + 'media ' + media.toFixed(1) + ' llamadas/mes (últimos 6 meses)</div>'
     + (delante ? '<div style="margin-top:.5rem">' + desglose + '</div>' : '');
   if (llamado) txt += '<div style="margin-top:.5rem"><span class="tag corto">⬤ llamada en ' + mesTxt(MES) + '</span></div>';
+  const fV = g.filas.find(f => f[0] === v);
+  const tEst = delante === 0 ? '¡Tu turno ya!' : (media <= 0 ? '¿?' : (grande + ' ' + unidad).trim());
+  LAST_EST = { nombre: NAMES[fV[1]], puesto: v, cat: g.cat + (g.pi ? ' · Promoción interna' : ''),
+               dpto: g.dpto, delante, tiempo: tEst };
+  $('pTuNombre').textContent = 'Nº ' + v + ' · ' + NAMES[fV[1]];
+  $('compartirBtn').style.display = 'inline-block';
   out.innerHTML = txt;
 }
 function renderLlamados(gi){
@@ -687,6 +716,104 @@ function showPersona(ni){
   $('personaPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+/* ---------- compartir consulta ---------- */
+let LAST_EST = null;
+function txtConsulta(){
+  if (!LAST_EST) return '';
+  const e = LAST_EST;
+  return 'INTERSINDICAL SALUT Orihuela · BOLSA Sanidad GVA\n'
+    + 'Consulta del ' + fechaTxt(new Date().toISOString().slice(0, 10)) + '\n\n'
+    + 'Nombre: ' + e.nombre + '\n'
+    + 'Puesto: ' + e.puesto + ' · ' + e.cat + ' · ' + e.dpto + '\n'
+    + 'Candidatos por delante: ' + e.delante + '\n'
+    + 'Tiempo estimado: ' + e.tiempo + '\n\n'
+    + 'Bolsa de trabajo a ' + fechaTxt(DATA.fBolsa)
+    + ' · contrataciones hasta ' + DATA.corte
+    + ' · Resultado orientativo no oficial de Intersindical Salut Orihuela.';
+}
+function tarjetaConsulta(){
+  const e = LAST_EST;
+  if (!e) return null;
+  const W = 1080, H = 680;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext && cv.getContext('2d');
+  if (!ctx) return null;
+  ctx.fillStyle = '#FFFDF9'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#BB2B09'; ctx.fillRect(0, 0, W, 86);
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 30px Arial, sans-serif';
+  ctx.fillText('INTERSINDICAL SALUT Orihuela · BOLSA Sanidad GVA', 36, 56);
+  let logoEl = null;
+  try { logoEl = document.querySelector('.brand img.logo'); } catch (err) {}
+  if (logoEl && logoEl.complete){ try { ctx.drawImage(logoEl, 40, 108, 118, 118); } catch (err) {} }
+  let y = 150;
+  if (logoEl && logoEl.complete){ y = 262; }
+  const fila = (lbl, val) => {
+    ctx.fillStyle = '#8A8178'; ctx.font = '600 21px Arial, sans-serif';
+    ctx.fillText(lbl.toUpperCase(), 40, y);
+    ctx.fillStyle = '#1D1B1A'; ctx.font = 'bold 34px Arial, sans-serif';
+    ctx.fillText(val, 40, y + 38);
+    y += 92;
+  };
+  fila('Nombre', e.nombre);
+  fila('Categoría', e.cat);
+  fila('Departamento', e.dpto);
+  fila('Puesto', String(e.puesto));
+  ctx.fillStyle = '#FBEAE4'; ctx.fillRect(620, 108, 420, 420);
+  ctx.fillStyle = '#8A2007';
+  ctx.font = '600 22px Arial, sans-serif';
+  ctx.fillText('CANDIDATOS POR DELANTE', 650, 172);
+  ctx.font = 'bold 118px Arial, sans-serif';
+  ctx.fillText(String(e.delante), 650, 300);
+  ctx.font = '600 22px Arial, sans-serif';
+  ctx.fillText('TIEMPO ESTIMADO PARA OFERTA', 650, 368);
+  ctx.font = 'bold 58px Arial, sans-serif';
+  ctx.fillText(e.tiempo, 650, 446);
+  ctx.fillStyle = '#F6F2EC'; ctx.fillRect(0, H - 48, W, 48);
+  ctx.fillStyle = '#5C544F'; ctx.font = '16px Arial, sans-serif';
+  ctx.fillText('Bolsa de trabajo a ' + fechaTxt(DATA.fBolsa) + ' · contrataciones hasta ' + DATA.corte
+    + ' · Herramienta orientativa (no oficial) de Intersindical Salut Orihuela', 36, H - 18);
+  return cv;
+}
+function mostrarTarjeta(dataUrl){
+  $('shareImg').src = dataUrl;
+  $('shareTxt').value = txtConsulta();
+  $('shareDl').href = dataUrl;
+  $('shareOverlay').style.display = 'flex';
+}
+function compartirConsulta(){
+  if (!LAST_EST) return;
+  const cv = tarjetaConsulta();
+  const texto = txtConsulta();
+  if (cv && cv.toBlob && navigator.share && navigator.canShare){
+    cv.toBlob(b => {
+      if (b){
+        try {
+          const f = new File([b], 'consulta-bolsa-intersindical.png', { type: 'image/png' });
+          if (navigator.canShare({ files: [f] })){
+            navigator.share({ files: [f], title: 'Consulta · Bolsa Sanidad GVA', text: texto }).catch(() => {});
+            return;
+          }
+        } catch (err) {}
+      }
+      if (cv.toDataURL) mostrarTarjeta(cv.toDataURL('image/png'));
+    });
+    return;
+  }
+  if (cv && cv.toDataURL) mostrarTarjeta(cv.toDataURL('image/png'));
+  else { $('shareTxt').value = texto; $('shareOverlay').style.display = 'flex'; }
+}
+$('compartirBtn').addEventListener('click', compartirConsulta);
+$('shareClose').addEventListener('click', () => { $('shareOverlay').style.display = 'none'; });
+$('shareOverlay').addEventListener('click', ev => { if (ev.target === $('shareOverlay')) $('shareOverlay').style.display = 'none'; });
+$('shareCopy').addEventListener('click', () => {
+  const t = $('shareTxt');
+  if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t.value).catch(() => {}); }
+  else { t.select(); try { document.execCommand('copy'); } catch (err) {} }
+  $('shareCopy').textContent = '¡Copiado!';
+  setTimeout(() => { $('shareCopy').textContent = 'Copiar texto'; }, 1600);
+});
+
 /* ---------- arranque ---------- */
 function initMes(){
   $('fMes').innerHTML = MESES_LIST.slice().reverse().map(m =>
@@ -732,6 +859,7 @@ window.__PANEL__ = {
   analisis, claseContrato, esCorto, delantePorSitu, ultimaLlamada, llamadosDe,
   DATA, setMes: m => { MES = m; }, setDur: d => { DUR = d; },
   abrirGrupoEnResumen, contratosDe, fechaTxt,
+  txtConsulta, compartirConsulta, estado: () => LAST_EST,
   toggleBucket: b => { if (BSEL.has(b)) BSEL.delete(b); else BSEL.add(b); },
   buckets: BSEL
 };

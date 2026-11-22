@@ -52,6 +52,11 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
   bolsa donde consta la persona, su **última llamada** y todos sus contratos con sus
   **fechas de inicio y fin** bien visibles y duración en días (departamento, tipo de
   nombramiento, breve, jornada y regla de 5 días de la app de Contrataciones).
+- **Compartir consulta**: junto al número de puesto se muestra el **nombre de la
+  persona consultada**, y un botón "Compartir consulta" genera una imagen (tarjeta
+  con el logo y encabezado de Intersindical Salut Orihuela) con nombre, puesto,
+  categoría y departamento, candidatos por delante y tiempo estimado, lista para
+  enviar por WhatsApp (o copiar texto / descargar imagen).
 - **Puestos pinchables**: en la ficha de una persona (y en los resultados del
   buscador), al pinchar sobre el **número de puesto** de una categoría y departamento
   se salta al Resumen con esa bolsa cargada y el puesto escrito en "Tu puesto en esta
