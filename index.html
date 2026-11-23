@@ -791,8 +791,7 @@ function txtConsulta(){
     + 'Consulta del ' + fechaTxt(new Date().toISOString().slice(0, 10)) + '\n\n'
     + 'Nombre: ' + e.nombre + '\n'
     + 'Puesto: ' + e.puesto + ' · ' + e.cat + ' · ' + e.dpto + (e.perfil ? ' · perfil ' + e.perfil : '') + '\n'
-    + 'Candidatos por delante: ' + e.delante + '\n'
-    + 'Tiempo estimado: ' + e.tiempo + '\n\n'
+    + 'Candidatos por delante: ' + e.delante + '\n\n'
     + 'Bolsa de trabajo a ' + fechaTxt(DATA.fBolsa)
     + ' · contrataciones hasta ' + DATA.corte
     + ' · Resultado orientativo no oficial de Intersindical Salut Orihuela.';
@@ -828,13 +827,9 @@ function tarjetaConsulta(){
   ctx.fillStyle = '#FBEAE4'; ctx.fillRect(620, 108, 420, 420);
   ctx.fillStyle = '#8A2007';
   ctx.font = '600 22px Arial, sans-serif';
-  ctx.fillText('CANDIDATOS POR DELANTE', 650, 172);
+  ctx.fillText('CANDIDATOS POR DELANTE', 650, 200);
   ctx.font = 'bold 118px Arial, sans-serif';
-  ctx.fillText(String(e.delante), 650, 300);
-  ctx.font = '600 22px Arial, sans-serif';
-  ctx.fillText('TIEMPO ESTIMADO PARA OFERTA', 650, 368);
-  ctx.font = 'bold 58px Arial, sans-serif';
-  ctx.fillText(e.tiempo, 650, 446);
+  ctx.fillText(String(e.delante), 650, 370);
   ctx.fillStyle = '#F6F2EC'; ctx.fillRect(0, H - 48, W, 48);
   ctx.fillStyle = '#5C544F'; ctx.font = '16px Arial, sans-serif';
   ctx.fillText('Bolsa de trabajo a ' + fechaTxt(DATA.fBolsa) + ' · contrataciones hasta ' + DATA.corte

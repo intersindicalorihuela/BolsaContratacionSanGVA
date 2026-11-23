@@ -143,7 +143,7 @@ check(E('compartirBtn').style.display === 'inline-block', 'boton Compartir consu
 const tCons = P.txtConsulta();
 check(tCons.indexOf('INTERSINDICAL SALUT Orihuela · BOLSA Sanidad GVA') === 0, 'texto de consulta con encabezado del sindicato');
 check(tCons.indexOf('Nombre: ' + est.nombre) !== -1 && tCons.indexOf('Candidatos por delante: ' + est.delante) !== -1
-      && tCons.indexOf('Tiempo estimado:') !== -1, 'texto con todos los datos para el afiliado');
+      && tCons.indexOf('Tiempo estimado:') === -1, 'texto con nombre, puesto y por delante (sin tiempo estimado)');
 
 // delante = 0: mensaje directo
 E('fPuesto').value = String(g.filas[0][0]);
