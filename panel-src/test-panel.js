@@ -144,6 +144,12 @@ const tCons = P.txtConsulta();
 check(tCons.indexOf('INTERSINDICAL SALUT Orihuela · BOLSA Sanidad GVA') === 0, 'texto de consulta con encabezado del sindicato');
 check(tCons.indexOf('Nombre: ' + est.nombre) !== -1 && tCons.indexOf('Candidatos por delante: ' + est.delante) !== -1
       && tCons.indexOf('Tiempo estimado:') === -1, 'texto con nombre, puesto y por delante (sin tiempo estimado)');
+check(tCons.indexOf('Situaciones: DISPONIBLE + ACTIVO (DISPONIBLE ESPECIAL) + ACTIVO (No vacante) (DISPONIBLE ESPECIAL)') !== -1,
+      'consulta compartida con los filtros de situaciones aplicados');
+check(tCons.indexOf('contrataciones hasta') === -1
+      && tCons.indexOf('_Resultado orientativo no oficial_') !== -1
+      && tCons.indexOf('*Intersindical Salut Orihuela*') !== -1,
+      'pie de la consulta: sin contrataciones, cursiva y negrita');
 
 // delante = 0: mensaje directo
 E('fPuesto').value = String(g.filas[0][0]);

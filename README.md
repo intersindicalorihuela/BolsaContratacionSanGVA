@@ -59,7 +59,8 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
 - **Compartir consulta**: junto al número de puesto se muestra el **nombre de la
   persona consultada**, y un botón "Compartir consulta" genera una imagen (tarjeta
   con el logo y encabezado de Intersindical Salut Orihuela) con nombre, puesto,
-  categoría y departamento, y candidatos por delante, lista para
+  categoría y departamento, los filtros de situaciones aplicados y candidatos por
+  delante, lista para
   enviar por WhatsApp (o copiar texto / descargar imagen).
 - **Puestos pinchables**: en la ficha de una persona (y en los resultados del
   buscador), al pinchar sobre el **número de puesto** de una categoría y departamento

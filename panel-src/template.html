@@ -784,17 +784,22 @@ function showPersona(ni){
 
 /* ---------- compartir consulta ---------- */
 let LAST_EST = null;
+function filtrosConsulta(){
+  const sits = BORDEN.filter(b => BSEL.has(b)).map(b => DATA.bucketLbl[b]).join(' + ');
+  return { situ: sits || '—', perfil: LAST_EST && LAST_EST.perfil ? LAST_EST.perfil : '' };
+}
 function txtConsulta(){
   if (!LAST_EST) return '';
-  const e = LAST_EST;
+  const e = LAST_EST, f = filtrosConsulta();
   return 'INTERSINDICAL SALUT Orihuela · BOLSA Sanidad GVA\n'
     + 'Consulta del ' + fechaTxt(new Date().toISOString().slice(0, 10)) + '\n\n'
     + 'Nombre: ' + e.nombre + '\n'
-    + 'Puesto: ' + e.puesto + ' · ' + e.cat + ' · ' + e.dpto + (e.perfil ? ' · perfil ' + e.perfil : '') + '\n'
+    + 'Puesto: ' + e.puesto + ' · ' + e.cat + ' · ' + e.dpto + '\n'
+    + 'Situaciones: ' + f.situ + '\n'
+    + (f.perfil ? 'Perfil: ' + f.perfil + '\n' : '')
     + 'Candidatos por delante: ' + e.delante + '\n\n'
-    + 'Bolsa de trabajo a ' + fechaTxt(DATA.fBolsa)
-    + ' · contrataciones hasta ' + DATA.corte
-    + ' · Resultado orientativo no oficial de Intersindical Salut Orihuela.';
+    + 'Bolsa de trabajo a ' + fechaTxt(DATA.fBolsa) + '\n'
+    + '_Resultado orientativo no oficial_ de *Intersindical Salut Orihuela*.';
 }
 function tarjetaConsulta(){
   const e = LAST_EST;
@@ -823,17 +828,45 @@ function tarjetaConsulta(){
   fila('Nombre', e.nombre);
   fila('Categoría', e.cat);
   fila('Departamento', e.dpto);
-  fila('Puesto', String(e.puesto) + (e.perfil ? ' · ' + e.perfil : ''));
+  fila('Puesto', String(e.puesto));
   ctx.fillStyle = '#FBEAE4'; ctx.fillRect(620, 108, 420, 420);
+  const f = filtrosConsulta();
   ctx.fillStyle = '#8A2007';
   ctx.font = '600 22px Arial, sans-serif';
-  ctx.fillText('CANDIDATOS POR DELANTE', 650, 200);
-  ctx.font = 'bold 118px Arial, sans-serif';
-  ctx.fillText(String(e.delante), 650, 370);
+  ctx.fillText('CANDIDATOS POR DELANTE', 650, 172);
+  ctx.font = 'bold 108px Arial, sans-serif';
+  ctx.fillText(String(e.delante), 650, 310);
+  ctx.font = '600 18px Arial, sans-serif';
+  ctx.fillText('SEGÚN LAS SITUACIONES MARCADAS', 650, 368);
+  const wrap = (s, maxw) => {
+    const out = []; let line = '';
+    for (const w of s.split(' ')){
+      const t = line ? line + ' ' + w : w;
+      if (ctx.measureText(t).width > maxw && line){ out.push(line); line = w; } else line = t;
+    }
+    if (line) out.push(line);
+    return out;
+  };
+  ctx.font = '17px Arial, sans-serif';
+  ctx.fillStyle = '#5C4A42';
+  let ly = 398;
+  for (const ln of wrap(f.situ, 360)){ if (ly > 470) break; ctx.fillText(ln, 650, ly); ly += 23; }
+  if (f.perfil && ly <= 470){
+    ctx.font = '600 17px Arial, sans-serif';
+    ctx.fillStyle = '#8A2007';
+    ctx.fillText('Perfil: ' + f.perfil, 650, ly + 2);
+  }
   ctx.fillStyle = '#F6F2EC'; ctx.fillRect(0, H - 48, W, 48);
-  ctx.fillStyle = '#5C544F'; ctx.font = '16px Arial, sans-serif';
-  ctx.fillText('Bolsa de trabajo a ' + fechaTxt(DATA.fBolsa) + ' · contrataciones hasta ' + DATA.corte
-    + ' · Herramienta orientativa (no oficial) de Intersindical Salut Orihuela', 36, H - 18);
+  let fx = 36;
+  ctx.fillStyle = '#5C544F'; ctx.font = '15px Arial, sans-serif';
+  const pie1 = 'Bolsa de trabajo a ' + fechaTxt(DATA.fBolsa) + ' · ';
+  ctx.fillText(pie1, fx, H - 18); fx += ctx.measureText(pie1).width;
+  ctx.font = 'italic 15px Arial, sans-serif';
+  ctx.fillText('Resultado orientativo no oficial', fx, H - 18); fx += ctx.measureText('Resultado orientativo no oficial').width + 4;
+  ctx.fillStyle = '#5C544F'; ctx.font = '15px Arial, sans-serif';
+  ctx.fillText(' de ', fx, H - 18); fx += ctx.measureText(' de ').width;
+  ctx.font = 'bold 15px Arial, sans-serif';
+  ctx.fillText('Intersindical Salut Orihuela.', fx, H - 18);
   return cv;
 }
 function mostrarTarjeta(dataUrl){
