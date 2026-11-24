@@ -229,6 +229,21 @@ const r0 = DATA.contratos.find(r => String(new Date(Date.UTC(1970, 0, 1) + r[4] 
 const csMes = P.contratosDe(r0[0], '2026-10');
 check(csMes.length >= 1 && csMes.every(c => c[4] != null), 'fechas de contrato de inicio y fin accesibles (' + csMes.length + ' contratos del contratado del mes)');
 
+// --- llamados ordenados por contrato mas reciente (arriba los ultimos) ---
+P.renderGrupo(gi);
+const posLlam = [...P.llamadosDe(gi, '2026-10', '')];
+const byPTest = new Map(g.filas.map(f => [f[0], f]));
+const keyUlt = p => {
+  const f = byPTest.get(p);
+  const cs = f ? P.contratosDe(f[1], '2026-10') : [];
+  return cs.length ? -Math.max(...cs.map(c => c[4])) : -Infinity;
+};
+const esperado = [...posLlam].sort((a, b) => (keyUlt(a) - keyUlt(b)) || (a - b));
+const mostrados = (E('gLlamChips').innerHTML.match(new RegExp('>(\\d+) ' + String.fromCharCode(183) + ' ', 'g')) || [])
+  .map(s => parseInt(s.slice(1), 10));
+check(mostrados.length === posLlam.length && mostrados.every((p, i) => p === esperado[i]),
+  'llamados ordenados por contrato mas reciente (' + mostrados.slice(0, 4).join(' > ') + ')');
+
 // --- sesion recordada en el dispositivo ---
 check(storage.getItem('intersindical_panel_auth') !== null, 'sesion guardada en el dispositivo');
 E('logoutBtn').listeners.click();

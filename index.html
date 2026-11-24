@@ -682,14 +682,18 @@ function renderLlamados(gi){
   const g = GRUPOS[gi];
   const llamPos = llamadosDe(gi, MES, DUR);
   const byP = new Map(g.filas.map(f => [f[0], f]));
-  const list = [...llamPos].sort((a, b) => a - b).map(p => {
+  const list = /* orden por contrato mas reciente: arriba los ultimos contratos */ [...llamPos].map(p => {
     const f = byP.get(p);
     const s = f ? g.situ[f[3]] : '';
-    const fechas = f ? contratosDe(f[1], MES).map(r => dTxt(r[4]) + (r[5] != null ? '→' + dTxt(r[5]) : '')).join(' · ') : '';
-    return '<span class="pill" title="' + ncell(s + (fechas ? ' · contratos: ' + fechas : '')) + '">'
-      + p + ' · ' + ncell(f ? NAMES[f[1]] : '?')
-      + (fechas ? ' <small>' + ncell(fechas) + '</small>' : '') + '</span>';
-  }).join('');
+    const cs = f ? contratosDe(f[1], MES) : [];
+    const fechas = cs.map(r => dTxt(r[4]) + (r[5] != null ? '→' + dTxt(r[5]) : '')).join(' · ');
+    const ultima = cs.length ? Math.max(...cs.map(c => c[4])) : 0;
+    return { p, f, s, fechas, ultima };
+  }).sort((a, b) => (b.ultima - a.ultima) || (a.p - b.p)).map(x =>
+    '<span class="pill" title="' + ncell(x.s + (x.fechas ? ' · contratos: ' + x.fechas : '')) + '">'
+      + x.p + ' · ' + ncell(x.f ? NAMES[x.f[1]] : '?')
+      + (x.fechas ? ' <small>' + ncell(x.fechas) + '</small>' : '') + '</span>'
+  ).join('');
   let siguiente = null;
   const pfL = pfValor();
   for (const f of g.filas){

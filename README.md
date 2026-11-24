@@ -15,7 +15,7 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
 - **Resumen**: tabla de todas las bolsas (categoría · departamento, ordinarias y Pi) con
   candidatos, activos, contratos del mes, llamadas del mes y último puesto llamado.
 - **Detalle de bolsa**: caja protagonista de **llamados del mes** (nombres, puestos y
-  fechas de contrato), **estimación de espera** con los candidatos por delante al lado
+  fechas de contrato, **ordenados por fecha: los últimos contratos arriba**), **estimación de espera** con los candidatos por delante al lado
   (en días cuando queda aproximadamente un mes o menos), el siguiente puesto no
   llamado, y el gráfico por meses plegado en segundo plano.
 - **Filtro de contratos**: menú desplegable (cabecera) para ver en detalle solo los
