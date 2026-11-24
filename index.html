@@ -682,18 +682,28 @@ function renderLlamados(gi){
   const g = GRUPOS[gi];
   const llamPos = llamadosDe(gi, MES, DUR);
   const byP = new Map(g.filas.map(f => [f[0], f]));
-  const list = /* orden por contrato mas reciente: arriba los ultimos contratos */ [...llamPos].map(p => {
+  /* un elemento por contrato (no agrupado por trabajador), los mas recientes arriba */
+  const items = [];
+  for (const p of [...llamPos].sort((a, b) => a - b)){
     const f = byP.get(p);
-    const s = f ? g.situ[f[3]] : '';
-    const cs = f ? contratosDe(f[1], MES) : [];
-    const fechas = cs.map(r => dTxt(r[4]) + (r[5] != null ? '→' + dTxt(r[5]) : '')).join(' · ');
-    const ultima = cs.length ? Math.max(...cs.map(c => c[4])) : 0;
-    return { p, f, s, fechas, ultima };
-  }).sort((a, b) => (b.ultima - a.ultima) || (a.p - b.p)).map(x =>
-    '<span class="pill" title="' + ncell(x.s + (x.fechas ? ' · contratos: ' + x.fechas : '')) + '">'
-      + x.p + ' · ' + ncell(x.f ? NAMES[x.f[1]] : '?')
-      + (x.fechas ? ' <small>' + ncell(x.fechas) + '</small>' : '') + '</span>'
-  ).join('');
+    if (!f) continue;
+    for (const c of contratosDe(f[1], MES)){
+      const clas = claseContrato(c);
+      if (DUR && clas !== DUR) continue;
+      items.push({ p, f, c, clas, corto: esCorto(c[4], c[5]) });
+    }
+  }
+  const tipoContr = x => x.clas === 'V' ? 'vacante'
+    : (x.corto === true ? 'corto' : (x.corto === false ? 'más de 5 días' : 'indeterminado'));
+  const clsContr = x => x.clas === 'V' ? 'indent' : (x.corto === true ? 'corto' : (x.corto === false ? 'largo' : ''));
+  items.sort((a, b) => (b.c[4] - a.c[4]) || (a.p - b.p));
+  const list = items.map(x => {
+    const s = g.situ[x.f[3]];
+    const fechas = dTxt(x.c[4]) + (x.c[5] != null ? '→' + dTxt(x.c[5]) : '');
+    return '<span class="pill" title="' + ncell(s + ' · contrato: ' + fechas) + '">' + ncell(fechas)
+      + ' · ' + x.p + ' · ' + ncell(NAMES[x.f[1]])
+      + ' <span class="tag ' + clsContr(x) + '">' + tipoContr(x) + '</span></span>';
+  }).join('');
   let siguiente = null;
   const pfL = pfValor();
   for (const f of g.filas){
@@ -703,6 +713,7 @@ function renderLlamados(gi){
   $('gLlamTitle').textContent = 'Llamados en ' + mesTxt(MES) + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '');
   $('gLlamInfo').textContent = llamPos.size
     ? 'En ' + mesTxt(MES) + ' hubo ' + llamPos.size + ' personas de esta bolsa con contrato' + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '') + ' (por nombre).'
+      + (items.length ? ' \u00daltimo contrato: ' + dTxt(items[0].c[4]) + ' a ' + NAMES[items[0].f[1]] + ' (puesto ' + items[0].p + ', ' + tipoContr(items[0]) + ').' : '')
       + (siguiente != null ? ' El siguiente puesto ' + queSit + ' no llamado es el ' + siguiente
         + (pfL ? ' (perfil: ' + ncell(pfEtiqueta()) + ')' : '') + '.' : '')
     : 'En ' + mesTxt(MES) + ' no hubo contratos' + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '') + ' que recayeran en personas de esta bolsa (por nombre).';

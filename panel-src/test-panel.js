@@ -229,20 +229,26 @@ const r0 = DATA.contratos.find(r => String(new Date(Date.UTC(1970, 0, 1) + r[4] 
 const csMes = P.contratosDe(r0[0], '2026-10');
 check(csMes.length >= 1 && csMes.every(c => c[4] != null), 'fechas de contrato de inicio y fin accesibles (' + csMes.length + ' contratos del contratado del mes)');
 
-// --- llamados ordenados por contrato mas reciente (arriba los ultimos) ---
+// --- llamados contrato a contrato, los mas recientes arriba, con tipo ---
 P.renderGrupo(gi);
 const posLlam = [...P.llamadosDe(gi, '2026-10', '')];
 const byPTest = new Map(g.filas.map(f => [f[0], f]));
-const keyUlt = p => {
+const inis = [];
+for (const p of posLlam){
   const f = byPTest.get(p);
   const cs = f ? P.contratosDe(f[1], '2026-10') : [];
-  return cs.length ? -Math.max(...cs.map(c => c[4])) : -Infinity;
-};
-const esperado = [...posLlam].sort((a, b) => (keyUlt(a) - keyUlt(b)) || (a - b));
-const mostrados = (E('gLlamChips').innerHTML.match(new RegExp('>(\\d+) ' + String.fromCharCode(183) + ' ', 'g')) || [])
-  .map(s => parseInt(s.slice(1), 10));
-check(mostrados.length === posLlam.length && mostrados.every((p, i) => p === esperado[i]),
-  'llamados ordenados por contrato mas reciente (' + mostrados.slice(0, 4).join(' > ') + ')');
+  inis.push(...cs.map(c => c[4]));
+}
+const pildoras = (E('gLlamChips').innerHTML.match(new RegExp('>(\\d+)', 'g')) || []).map(s => parseInt(s.slice(1), 10));
+check(pildoras.length === inis.length && pildoras.length > 0
+      && pildoras.every((d, i) => i === 0 || d <= pildoras[i - 1]),
+  'llamados: un elemento por contrato, del mas reciente al mas antiguo (' + pildoras.length + ' contratos)');
+const htmlLlam = E('gLlamChips').innerHTML;
+check(htmlLlam.indexOf('corto') !== -1 && htmlLlam.indexOf('m\u00e1s de 5 d\u00edas') !== -1
+      || htmlLlam.indexOf('vacante') !== -1,
+  'cada contrato muestra su tipo (corto / mas de 5 dias / vacante)');
+check(E('gLlamInfo').textContent.indexOf('ltimo contrato:') !== -1,
+  'la linea informativa destaca el ultimo contrato (' + E('gLlamInfo').textContent.match(/ltimo contrato[^.]*/) + ')');
 
 // --- sesion recordada en el dispositivo ---
 check(storage.getItem('intersindical_panel_auth') !== null, 'sesion guardada en el dispositivo');
