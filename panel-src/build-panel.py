@@ -177,11 +177,13 @@ def main():
         gi = gidx.get(kstr)
         if gi is None:
             cat_lbl = CAT_LABELS.get(base, base.replace("_", " ").title())
-            for lbl in ccats:
+            ccat_i = None
+            for i, lbl in enumerate(ccats):
                 if catnorm(lbl) == catnorm(base):
                     cat_lbl = CAT_LABELS.get(lbl, lbl.title())
+                    ccat_i = i
                     break
-            grupos.append({"id": kstr, "cat": cat_lbl, "pi": pi, "dpto": dpto,
+            grupos.append({"id": kstr, "cat": cat_lbl, "pi": pi, "dpto": dpto, "ccat": ccat_i,
                            "situ": [], "filas": [], "act": [], "cnt": {}})
             gi = len(grupos) - 1
             gidx[kstr] = gi
