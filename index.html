@@ -87,7 +87,7 @@
   .panel .sub{font-size:.78rem;color:var(--ink-soft);margin-bottom:.8rem}
   .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:.6rem}
   .grid2.contrapeso{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
-  .llamchips{max-height:320px;overflow:auto;overflow-wrap:anywhere}
+  .llamchips{max-height:640px;overflow:auto;overflow-wrap:anywhere}
   .barsdet{margin-top:.9rem}
   .barsdet>summary{font-size:.8rem;font-weight:600;color:var(--ink-soft)}
   .estwrap{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap}
@@ -545,8 +545,9 @@ function renderGrupo(gi){
   $('lBars').textContent = 'Personas de esta bolsa con contrato, por mes' + (DUR ? ' (' + DUR_LBL[DUR] + ')' : '');
   const aAll = analisis(null, DUR);
   const cAll = aAll.cnt.get(gi) || {};
-  const max = Math.max(1, ...MESES_LIST.map(m => cAll[m] || 0));
-  $('gBars').innerHTML = MESES_LIST.map(m => {
+  const mesesBars = MESES_LIST.slice(-12);
+  const max = Math.max(1, ...mesesBars.map(m => cAll[m] || 0));
+  $('gBars').innerHTML = mesesBars.map(m => {
     const v = cAll[m] || 0;
     return '<div class="bar-row"><span>' + m + '</span><div><div class="bar' + (m === MES ? ' hoy' : '') + '" style="width:' + Math.max(2, Math.round(100 * v / max)) + '%"></div></div><span>' + (v || '') + '</span></div>';
   }).join('');
