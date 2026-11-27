@@ -25,7 +25,9 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
   **vacantes (interinidad)**. Afecta a la tabla de bolsas, a las barras mensuales,
   a los llamados del mes y a la media usada en la estimación. Las tarjetas de arriba
   muestran siempre el desglose completo del mes (cortos, más de 5 días, indeterminados
-  y vacantes).
+  y vacantes). Estas tarjetas van en un **desplegable minimizable**: el título muestra un
+  resumen compacto (contratos · cortos · vacantes) y se puede plegar para liberar
+  espacio en pantalla (sobre todo en móvil; en escritorio arranca abierto).
 - **"¿Cuánto queda?" por situación**: al consultar tu puesto se desglosan los
   candidatos que cumplen las situaciones marcadas y tienen **número menor al tuyo**
   (los que se seleccionarán antes para una oferta). El "siguiente puesto no llamado"

@@ -90,6 +90,7 @@
   .llamchips{max-height:640px;overflow:auto;overflow-wrap:anywhere}
   .barsdet{margin-top:.9rem}
   .barsdet>summary{font-size:.8rem;font-weight:600;color:var(--ink-soft)}
+  .kpisdet>summary{font-size:.85rem;padding:.35rem 0}
   .estwrap{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap}
   .estside{font-family:'IBM Plex Mono',monospace;font-size:1rem;font-weight:600;color:var(--red-deep)}
   details.otrasSit{margin-top:.5rem}
@@ -202,7 +203,10 @@
 
   <main>
     <section id="viewResumen">
-      <div class="kpis" id="kpis"></div>
+      <details class="barsdet kpisdet" id="detKpis" style="margin:0 0 1rem">
+        <summary id="kpiSum">Datos del mes</summary>
+        <div class="kpis" id="kpis" style="margin:.7rem 0 0"></div>
+      </details>
       <div class="filters">
         <div class="field"><label>Departamento</label><select id="fDpto"></select></div>
         <div class="field"><label>Categoría</label><select id="fCat"></select></div>
@@ -486,6 +490,8 @@ function renderKpis(){
     [indet, 'Indeterminados'],
     [vac, 'Vacantes (interinidad)']
   ].map(k => '<div class="kpi"><div class="n">' + k[0] + '</div><div class="l">' + ncell(k[1]) + '</div></div>').join('');
+  $('kpiSum').textContent = 'Datos del mes · ' + rows.length + ' contratos · '
+    + cortos + ' cortos · ' + vac + ' vacantes — toca para ver el desglose';
 }
 
 /* ---------- tabla de grupos ---------- */
@@ -973,6 +979,7 @@ function initMes(){
 }
 function init(){
   $('fechaActualizacion').textContent = fechaTxt(DATA.fBolsa);
+  try { $('detKpis').open = !!(window.matchMedia && window.matchMedia('(min-width: 900px)').matches); } catch (err) {}
   initMes(); initFiltros(); renderKpis(); renderTabla();
   setTab('buscar');
 }

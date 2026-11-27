@@ -56,6 +56,10 @@ check(E('loginCodigo').type === 'text' && E('verCodigo').textContent === 'Oculta
 E('verCodigo').listeners.click();
 check(E('loginCodigo').type === 'password' && E('verCodigo').textContent === 'Mostrar', 'vuelve a ocultar el código');
 check(E('viewBuscar').style.display === 'block' && E('viewResumen').style.display === 'none', 'pestaña principal tras acceder: Por nombre');
+check(E('kpiSum').textContent.indexOf('Datos del mes · ') === 0 && / contratos · \d+ cortos · \d+ vacantes/.test(E('kpiSum').textContent),
+  'KPIs minimizables: resumen compacto en el titulo (' + E('kpiSum').textContent + ')');
+check(E('detKpis').open === false, 'KPIs cerrados por defecto en pantalla estrecha (libera espacio en movil)');
+check((E('kpis').innerHTML.match(/class="kpi"/g) || []).length === 6, 'desglose completo de 6 tarjetas dentro del desplegable');
 
 const P = global.window.__PANEL__;
 const DATA = P.DATA;
