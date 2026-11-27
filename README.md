@@ -35,9 +35,9 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
   perfil anotado en la bolsa; la ficha del candidato también muestra sus perfiles.
   Los demás grupos no lo muestran porque la bolsa no recoge perfiles para ellos.
 
-- **Contratos con nº de puesto mayor que el tuyo**: al consultar tu puesto aparece una
+- **Contratos con nº de puesto menor que el tuyo**: al consultar tu puesto aparece una
   sección desplegable que lista, ordenados del más reciente al más antiguo, **todos los
-  contratos asignados en tu categoría y departamento con un número de puesto mayor que el
+  contratos asignados en tu categoría y departamento con un número de puesto menor que el
   tuyo**, con fecha, nº de puesto, persona y tipo de contrato (corto / más de 5 días /
   indeterminado / vacante). Respeta el filtro de contratos de la cabecera.
 

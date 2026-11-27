@@ -690,10 +690,10 @@ function renderMayores(g){
   const v = parseInt($('fPuesto').value, 10);
   if (g.ccat == null || isNaN(v) || !g.filas.some(f => f[0] === v)){ det.style.display = 'none'; return; }
   const cs = DATA.contratos.filter(c => c[1] === g.ccat && c[2] === DATA.dpts.indexOf(g.dpto)
-      && c[3] != null && c[3] > v)
+      && c[3] != null && c[3] < v)
     .sort((a, b) => (b[4] - a[4]) || (a[3] - b[3]));
   det.style.display = '';
-  $('lMayores').textContent = 'Contratos asignados con nº de puesto mayor que el ' + v
+  $('lMayores').textContent = 'Contratos asignados con nº de puesto menor que el ' + v
     + ' (' + g.cat + ' · ' + g.dpto + '): ' + cs.length;
   chips.innerHTML = cs.map(c => {
     const clas = claseContrato(c), corto = esCorto(c[4], c[5]);
@@ -705,7 +705,7 @@ function renderMayores(g){
       + ncell(fechas) + ' · puesto ' + c[3] + ' · ' + ncell(NAMES[c[0]])
       + (c[6] === 'P' ? ' · Pi' : '')
       + ' <span class="tag ' + cls + '">' + lbl + '</span></span>';
-  }).join('') || '<span class="mini">— Ningún contrato con nº mayor al tuyo en el periodo de datos.</span>';
+  }).join('') || '<span class="mini">— Ningún contrato con nº menor al tuyo en el periodo de datos.</span>';
 }
 function renderLlamados(gi){
   const g = GRUPOS[gi];
