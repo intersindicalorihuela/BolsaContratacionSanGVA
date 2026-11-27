@@ -35,11 +35,11 @@ En vez de cargar los dos datasets enteros (~11 MB) el navegador recibe un único
   perfil anotado en la bolsa; la ficha del candidato también muestra sus perfiles.
   Los demás grupos no lo muestran porque la bolsa no recoge perfiles para ellos.
 
-- **Contratos con nº de puesto menor que el tuyo**: al consultar tu puesto aparece una
-  sección desplegable que lista, ordenados del más reciente al más antiguo, **todos los
-  contratos asignados en tu categoría y departamento con un número de puesto menor que el
-  tuyo**, con fecha, nº de puesto, persona y tipo de contrato (corto / más de 5 días /
-  indeterminado / vacante). Respeta el filtro de contratos de la cabecera.
+- **Contratos por nº de puesto respecto al tuyo**: al consultar tu puesto aparecen
+  **dos desplegables** con los contratos de tu categoría y departamento asignados a un
+  **nº de puesto mayor** que el tuyo y a un **nº menor**, ordenados del más reciente al
+  más antiguo, con fecha, nº de puesto, persona y tipo de contrato (corto / más de 5
+  días / indeterminado / vacante). Respetan el filtro de contratos de la cabecera.
 
   Las casillas por defecto son **DISPONIBLE, ACTIVO (No vacante) (DISPONIBLE
   ESPECIAL) y ACTIVO (DISPONIBLE ESPECIAL)**; el resto de situaciones queda

@@ -254,6 +254,10 @@
               <summary id="lMayores"></summary>
               <div class="llamchips" id="mayChips" style="margin-top:.5rem"></div>
             </details>
+            <details class="barsdet" id="detMenores" style="display:none;margin-top:.4rem">
+              <summary id="lMenores"></summary>
+              <div class="llamchips" id="menChips" style="margin-top:.5rem"></div>
+            </details>
           </div>
         </div>
         <details class="barsdet">
@@ -640,11 +644,11 @@ function renderEstim(gi){
   const g = GRUPOS[gi];
   const v = parseInt($('fPuesto').value, 10);
   const out = $('estOut');
-  if (isNaN(v)){ out.className = 'mini'; out.textContent = 'Escribe tu nº de puesto.'; $('pTuNombre').textContent = ''; $('compartirBtn').style.display = 'none'; $('detMayores').style.display = 'none'; return; }
+  if (isNaN(v)){ out.className = 'mini'; out.textContent = 'Escribe tu nº de puesto.'; $('pTuNombre').textContent = ''; $('compartirBtn').style.display = 'none'; $('detMayores').style.display = 'none'; $('detMenores').style.display = 'none'; return; }
   out.className = '';
   if (!g.filas.some(f => f[0] === v)){
     out.innerHTML = '<span class="tag indent">—</span> <span class="mini">Ese puesto no figura en esta bolsa (revisa el número, o el turno si es promoción interna).</span>';
-    $('pTuNombre').textContent = ''; $('compartirBtn').style.display = 'none'; $('detMayores').style.display = 'none'; return;
+    $('pTuNombre').textContent = ''; $('compartirBtn').style.display = 'none'; $('detMayores').style.display = 'none'; $('detMenores').style.display = 'none'; return;
   }
   const t = delantePorSitu(g, v, pfValor());
   const delante = [...BSEL].reduce((a, b) => a + (t[b] || 0), 0);
@@ -682,30 +686,34 @@ function renderEstim(gi){
   $('pTuNombre').textContent = 'Nº ' + v + ' · ' + NAMES[fV[1]];
   $('compartirBtn').style.display = 'inline-block';
   out.innerHTML = txt;
-  renderMayores(g);
+  renderMayoresMenores(g);
 }
-/* contratos de esta categoría y departamento asignados con nº de puesto mayor al consultado */
-function renderMayores(g){
-  const det = $('detMayores'), chips = $('mayChips');
+/* contratos de esta categoría y departamento asignados con nº de puesto mayor/menor que el consultado */
+function pillContrato(c){
+  const clas = claseContrato(c), corto = esCorto(c[4], c[5]);
+  const lbl = clas === 'V' ? 'vacante' : (corto === true ? 'corto' : (corto === false ? 'más de 5 días' : 'indeterminado'));
+  const cls = clas === 'V' ? 'indent' : (corto === true ? 'corto' : (corto === false ? 'largo' : ''));
+  const fechas = dTxt(c[4]) + (c[5] != null ? '→' + dTxt(c[5]) : '');
+  const tnom = DATA.tnom[c[7]] || c[7];
+  return '<span class="pill" title="' + ncell((DATA.ccats[c[1]] || '') + ' · ' + tnom + ' · ' + fechas) + '">'
+    + ncell(fechas) + ' · puesto ' + c[3] + ' · ' + ncell(NAMES[c[0]])
+    + (c[6] === 'P' ? ' · Pi' : '')
+    + ' <span class="tag ' + cls + '">' + lbl + '</span></span>';
+}
+function renderMayoresMenores(g){
+  const detM = $('detMayores'), detN = $('detMenores');
   const v = parseInt($('fPuesto').value, 10);
-  if (g.ccat == null || isNaN(v) || !g.filas.some(f => f[0] === v)){ det.style.display = 'none'; return; }
-  const cs = DATA.contratos.filter(c => c[1] === g.ccat && c[2] === DATA.dpts.indexOf(g.dpto)
-      && c[3] != null && c[3] < v)
-    .sort((a, b) => (b[4] - a[4]) || (a[3] - b[3]));
-  det.style.display = '';
-  $('lMayores').textContent = 'Contratos asignados con nº de puesto menor que el ' + v
-    + ' (' + g.cat + ' · ' + g.dpto + '): ' + cs.length;
-  chips.innerHTML = cs.map(c => {
-    const clas = claseContrato(c), corto = esCorto(c[4], c[5]);
-    const lbl = clas === 'V' ? 'vacante' : (corto === true ? 'corto' : (corto === false ? 'más de 5 días' : 'indeterminado'));
-    const cls = clas === 'V' ? 'indent' : (corto === true ? 'corto' : (corto === false ? 'largo' : ''));
-    const fechas = dTxt(c[4]) + (c[5] != null ? '→' + dTxt(c[5]) : '');
-    const tnom = DATA.tnom[c[7]] || c[7];
-    return '<span class="pill" title="' + ncell((DATA.ccats[c[1]] || '') + ' · ' + tnom + ' · ' + fechas) + '">'
-      + ncell(fechas) + ' · puesto ' + c[3] + ' · ' + ncell(NAMES[c[0]])
-      + (c[6] === 'P' ? ' · Pi' : '')
-      + ' <span class="tag ' + cls + '">' + lbl + '</span></span>';
-  }).join('') || '<span class="mini">— Ningún contrato con nº menor al tuyo en el periodo de datos.</span>';
+  if (g.ccat == null || isNaN(v) || !g.filas.some(f => f[0] === v)){ detM.style.display = 'none'; detN.style.display = 'none'; return; }
+  const base = DATA.contratos.filter(c => c[1] === g.ccat && c[2] === DATA.dpts.indexOf(g.dpto) && c[3] != null);
+  const ord = (a, b) => (b[4] - a[4]) || (a[3] - b[3]);
+  const csMay = base.filter(c => c[3] > v).sort(ord);
+  const csMen = base.filter(c => c[3] < v).sort(ord);
+  const sit = g.cat + ' · ' + g.dpto;
+  detM.style.display = ''; detN.style.display = '';
+  $('lMayores').textContent = 'Contratos asignados con nº de puesto mayor que el ' + v + ' (' + sit + '): ' + csMay.length;
+  $('mayChips').innerHTML = csMay.map(pillContrato).join('') || '<span class="mini">— Ningún contrato con nº mayor al tuyo en el periodo de datos.</span>';
+  $('lMenores').textContent = 'Contratos asignados con nº de puesto menor que el ' + v + ' (' + sit + '): ' + csMen.length;
+  $('menChips').innerHTML = csMen.map(pillContrato).join('') || '<span class="mini">— Ningún contrato con nº menor al tuyo en el periodo de datos.</span>';
 }
 function renderLlamados(gi){
   const g = GRUPOS[gi];
@@ -1000,7 +1008,7 @@ window.__PANEL__ = {
   analisis, claseContrato, esCorto, delantePorSitu, ultimaLlamada, llamadosDe,
   DATA, setMes: m => { MES = m; }, setDur: d => { DUR = d; },
   abrirGrupoEnResumen, contratosDe, fechaTxt,
-  txtConsulta, compartirConsulta, renderMayores, estado: () => LAST_EST,
+  txtConsulta, compartirConsulta, renderMayoresMenores, estado: () => LAST_EST,
   toggleBucket: b => { if (BSEL.has(b)) BSEL.delete(b); else BSEL.add(b); },
   buckets: BSEL
 };

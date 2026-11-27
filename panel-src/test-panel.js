@@ -250,27 +250,34 @@ check(htmlLlam.indexOf('corto') !== -1 && htmlLlam.indexOf('m\u00e1s de 5 d\u00e
 check(E('gLlamInfo').textContent.indexOf('ltimo contrato:') !== -1,
   'la linea informativa destaca el ultimo contrato (' + E('gLlamInfo').textContent.match(/ltimo contrato[^.]*/) + ')');
 
-// --- contratos asignados con nº de puesto menor que el consultado ---
+// --- contratos asignados con nº de puesto mayor y menor que el consultado (dos desplegables) ---
 P.renderGrupo(gi);
 check(g.ccat != null, 'grupo TCAE·ELCHE con categoría de contrataciones enlazada');
 const vMay = g.filas[10][0];
 E('fPuesto').value = String(vMay);
 P.renderEstim(gi);
-const esperadosMay = DATA.contratos.filter(c => c[1] === g.ccat && c[2] === DATA.dpts.indexOf(g.dpto)
-  && c[3] != null && c[3] < vMay).sort((a, b) => (b[4] - a[4]) || (a[3] - b[3]));
-check(E('detMayores').style.display === '' && E('lMayores').textContent.indexOf('(' + g.cat + ' · ' + g.dpto + '): ' + esperadosMay.length) !== -1,
-  'sección con ' + esperadosMay.length + ' contratos con puesto < ' + vMay + ' (' + E('lMayores').textContent + ')');
-const pillsMay = E('mayChips').innerHTML.split('class="pill"').length - 1;
-check(pillsMay === esperadosMay.length && pillsMay > 0, 'una píldora por contrato asignado con puesto mayor (' + pillsMay + ')');
-check(E('mayChips').innerHTML.indexOf('puesto ' + esperadosMay[0][3]) !== -1
-      && esperadosMay.every(c => c[3] < vMay),
-  'contrato más reciente arriba (' + esperadosMay[0][3] + 'puesto) y todos con nº < ' + vMay);
+const baseMay = DATA.contratos.filter(c => c[1] === g.ccat && c[2] === DATA.dpts.indexOf(g.dpto) && c[3] != null);
+const esperadosMay = baseMay.filter(c => c[3] > vMay).sort((a, b) => (b[4] - a[4]) || (a[3] - b[3]));
+const esperadosMen = baseMay.filter(c => c[3] < vMay).sort((a, b) => (b[4] - a[4]) || (a[3] - b[3]));
+check(E('detMayores').style.display === '' && E('detMenores').style.display === '',
+  'dos desplegables visibles (mayor y menor que el puesto consultado)');
+check(E('lMayores').textContent.indexOf('(' + g.cat + ' · ' + g.dpto + '): ' + esperadosMay.length) !== -1
+      && E('lMenores').textContent.indexOf('(' + g.cat + ' · ' + g.dpto + '): ' + esperadosMen.length) !== -1,
+  'contadores exactos: mayor (' + esperadosMay.length + ') y menor (' + esperadosMen.length + ')');
+check(E('mayChips').innerHTML.split('class="pill"').length - 1 === esperadosMay.length
+      && E('menChips').innerHTML.split('class="pill"').length - 1 === esperadosMen.length,
+  'una píldora por contrato en cada desplegable');
+check(esperadosMay.every(c => c[3] > vMay) && esperadosMen.every(c => c[3] < vMay)
+      && E('mayChips').innerHTML.indexOf('puesto ' + esperadosMay[0][3]) !== -1
+      && E('menChips').innerHTML.indexOf('puesto ' + esperadosMen[0][3]) !== -1,
+  'cada desplegable con sus nºs (> y <) y contrato más reciente arriba');
 const gSin = DATA.grupos.find(gr => gr.ccat == null && (gr.cnt.D || 0) > 0);
 if (gSin){
   P.renderGrupo(DATA.grupos.indexOf(gSin));
   E('fPuesto').value = String(gSin.filas[5][0]);
   P.renderEstim(DATA.grupos.indexOf(gSin));
-  check(E('detMayores').style.display === 'none', 'grupo sin contrataciones no muestra la sección');
+  check(E('detMayores').style.display === 'none' && E('detMenores').style.display === 'none',
+        'grupo sin contrataciones no muestra ninguno de los dos desplegables');
 }
 P.renderGrupo(gi);
 
